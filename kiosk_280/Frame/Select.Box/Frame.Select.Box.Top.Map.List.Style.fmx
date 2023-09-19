@@ -1,0 +1,21 @@
+object SelectBoxTopMapListStyle: TSelectBoxTopMapListStyle
+  Size.Width = 1080.000000000000000000
+  Size.Height = 54.000000000000000000
+  Size.PlatformDefault = False
+  object Layout1: TLayout
+    Align = Client
+    Size.Width = 1080.000000000000000000
+    Size.Height = 54.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object RightRectangle: TRectangle
+      Align = Center
+      Fill.Color = claNull
+      Size.Width = 50.000000000000000000
+      Size.Height = 63.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Color = claRed
+      Stroke.Thickness = 0.000000000000000000
+    end
+  end
+end

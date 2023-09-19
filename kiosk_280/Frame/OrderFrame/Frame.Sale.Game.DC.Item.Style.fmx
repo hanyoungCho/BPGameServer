@@ -1,0 +1,22 @@
+object SaleGameDCItemStyle: TSaleGameDCItemStyle
+  Size.Width = 301.000000000000000000
+  Size.Height = 44.000000000000000000
+  Size.PlatformDefault = False
+  object Layout1: TLayout
+    Align = Client
+    Size.Width = 301.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object txtDC: TText
+      Align = Client
+      Size.Width = 301.000000000000000000
+      Size.Height = 44.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Font.Family = 'Prompt'
+      TextSettings.Font.Size = 24.000000000000000000
+      TextSettings.FontColor = xFF4F515E
+      TextSettings.HorzAlign = Leading
+    end
+  end
+end

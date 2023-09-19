@@ -1,0 +1,48 @@
+object SelectBoxFloorItemVer2Style: TSelectBoxFloorItemVer2Style
+  Size.Width = 360.000000000000000000
+  Size.Height = 100.000000000000000000
+  Size.PlatformDefault = False
+  object Layout: TLayout
+    Align = Client
+    Size.Width = 360.000000000000000000
+    Size.Height = 100.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object SideRectangle: TRectangle
+      Align = Right
+      Fill.Color = claBlack
+      Position.X = 359.000000000000000000
+      Size.Width = 1.000000000000000000
+      Size.Height = 100.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+    end
+    object FloorRectangle: TRectangle
+      Align = Client
+      Fill.Color = xFF848484
+      Size.Width = 359.000000000000000000
+      Size.Height = 100.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      object Text: TText
+        Align = Client
+        Size.Width = 359.000000000000000000
+        Size.Height = 100.000000000000000000
+        Size.PlatformDefault = False
+        Text = '1F'
+        TextSettings.Font.Family = 'Noto Sans CJK KR'
+        TextSettings.Font.Size = 40.000000000000000000
+        TextSettings.FontColor = claWhite
+      end
+    end
+    object Rectangle: TRectangle
+      Align = Contents
+      Fill.Color = claNull
+      Size.Width = 360.000000000000000000
+      Size.Height = 100.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      OnClick = RectangleClick
+    end
+  end
+end

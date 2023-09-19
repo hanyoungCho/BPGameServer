@@ -1,0 +1,30 @@
+object SaleBoxPageItemStyle: TSaleBoxPageItemStyle
+  Size.Width = 38.000000000000000000
+  Size.Height = 38.000000000000000000
+  Size.PlatformDefault = False
+  object Layout: TLayout
+    Align = Client
+    Size.Width = 38.000000000000000000
+    Size.Height = 38.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object Circle: TCircle
+      Align = Client
+      Fill.Color = xFF37383C
+      Size.Width = 38.000000000000000000
+      Size.Height = 38.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object Text: TText
+      Align = Client
+      Size.Width = 38.000000000000000000
+      Size.Height = 38.000000000000000000
+      Size.PlatformDefault = False
+      Text = '1'
+      TextSettings.Font.Family = 'Roboto'
+      TextSettings.Font.Size = 25.000000000000000000
+      TextSettings.FontColor = claWhite
+      OnClick = TextClick
+    end
+  end
+end

@@ -1,0 +1,315 @@
+object SaleMember: TSaleMember
+  Left = 0
+  Top = 0
+  BorderStyle = None
+  ClientHeight = 1920
+  ClientWidth = 1080
+  Position = MainFormCenter
+  Transparency = True
+  WindowState = wsMaximized
+  FormFactor.Width = 1280
+  FormFactor.Height = 1024
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  DesignerMasterStyle = 0
+  object ImgLayout: TLayout
+    Align = Client
+    Size.Width = 1080.000000000000000000
+    Size.Height = 1920.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object BGRectangle: TRectangle
+      Align = Client
+      Fill.Color = xFF212225
+      Size.Width = 1080.000000000000000000
+      Size.Height = 1920.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+    end
+  end
+  object Layout: TLayout
+    Align = Client
+    Size.Width = 1080.000000000000000000
+    Size.Height = 1920.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    OnClick = ProcessRectangleClick
+    object TopLayout: TLayout
+      Align = Top
+      Size.Width = 1080.000000000000000000
+      Size.Height = 470.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object Text1: TText
+        Position.X = 100.000000000000000000
+        Position.Y = 208.000000000000000000
+        Size.Width = 880.000000000000000000
+        Size.Height = 61.000000000000000000
+        Size.PlatformDefault = False
+        Text = #44208#51228' '#54616#44592
+        TextSettings.Font.Family = 'NanumSquareRound'
+        TextSettings.Font.Size = 54.000000000000000000
+        TextSettings.Font.StyleExt = {00070000000000000004000000}
+        TextSettings.FontColor = claWhite
+      end
+      object txtMemberNm: TText
+        Position.X = 100.000000000000000000
+        Position.Y = 349.000000000000000000
+        Size.Width = 800.000000000000000000
+        Size.Height = 52.000000000000000000
+        Size.PlatformDefault = False
+        Text = #54924#50896#45784
+        TextSettings.Font.Family = 'NanumSquareRound'
+        TextSettings.Font.Size = 46.000000000000000000
+        TextSettings.Font.StyleExt = {00070000000000000004000000}
+        TextSettings.FontColor = claWhite
+        TextSettings.HorzAlign = Leading
+      end
+      object Text3: TText
+        Position.X = 100.000000000000000000
+        Position.Y = 413.000000000000000000
+        Size.Width = 880.000000000000000000
+        Size.Height = 57.000000000000000000
+        Size.PlatformDefault = False
+        Text = #51060#50857#54616#49892' '#54924#50896#44428' '#54869#51064' '#54980' '#44208#51228#54644' '#51452#49464#50836'.'
+        TextSettings.Font.Family = 'Prompt'
+        TextSettings.Font.Size = 38.000000000000000000
+        TextSettings.FontColor = claWhite
+        TextSettings.HorzAlign = Leading
+      end
+      object recClose: TRectangle
+        Fill.Color = claNull
+        Position.X = 932.000000000000000000
+        Position.Y = 40.000000000000000000
+        Size.Width = 108.000000000000000000
+        Size.Height = 108.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Thickness = 0.000000000000000000
+        OnClick = recCloseClick
+        object Image14: TImage
+          MultiResBitmap.LoadSize = 2
+          MultiResBitmap = <
+            item
+              Width = 68
+              Height = 68
+              PNG = {
+                89504E470D0A1A0A0000000D4948445200000044000000440806000000381393
+                B2000000017352474200AECE1CE90000000467414D410000B18F0BFC61050000
+                021849444154785EEDD5EB6EEA30104561D4172F4F4E9BADE58D68152102BECC
+                38FEA4A35681D833EB47CF655996655996106EB7DBF7CF463FCBA3B4AAECA203
+                2C7314C7B0F2F8B8EDDD2B47206394FF3136D7F2D17B7400E7205394EA314C07
+                711E32446916C37420E7227294E6314C07733E2246E916C37401F7205294EE31
+                4C17711F22441916C37421F7626494E1314C17733F46440913C3340073A06794
+                70314C83300F7A44091BC3341073A16594F0314C83311F5A444913C3342073A2
+                669474314C83322F6A44491BC3343073E39328E9639806677EBC13659A18A605
+                D80347A24C17C3B408FBE09528D3C6302DC45E781665FA18A6C5D80F7B514E13
+                C3B4207BE231CAE9629816655F28C46963981666EF5DE78A615A9CFDFF181AE3
+                ABFC1C42DB975FEFF69E9DC2CEDF8CBBC73FB4A7B0F707B4FCBB3B4D9467FF9B
+                E8771E61FA28CF62989EF111A68DF24A0CD3677C05D3453912C3F41DBE8A69A2
+                BC13C3F45D5E41FA289FC430BDC3AB481BA5460CD3BB1C8174516AC6309DC151
+                4813A5450CD3591C89F0515AC6309DC9D1081BA5470CD3D95C8170517AC630DD
+                C155081365440CD35D5C89E15146C630DDC9D5181625420CD3DD8C80EE5122C5
+                30CDC028E81625620CD32C8C84E65122C730CDC468681625430CD36C8C88EA51
+                32C530CDC8A8A81625630CD3AC8C8C8FA3648E619A99D1F151947286A58B619A
+                9D15501E1FB7BDEB83D2C630EDC02AF9775996655996295C2EBF807492A61919
+                4FF90000000049454E44AE426082}
+              FileName = 'D:\Works\BowlingPick\kiosk_280\Image\Close.png'
+            end>
+          HitTest = False
+          Position.X = 20.000000000000000000
+          Position.Y = 20.000000000000000000
+          Size.Width = 68.000000000000000000
+          Size.Height = 68.000000000000000000
+          Size.PlatformDefault = False
+          OnClick = recCloseClick
+        end
+      end
+    end
+    object ProductRectangle: TRectangle
+      Align = Client
+      Fill.Color = claNull
+      Margins.Top = 30.000000000000000000
+      Size.Width = 1080.000000000000000000
+      Size.Height = 1182.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      object Rectangle1: TRectangle
+        Fill.Color = claWhite
+        Position.X = 100.000000000000000000
+        Position.Y = 120.000000000000000000
+        Size.Width = 880.000000000000000000
+        Size.Height = 394.000000000000000000
+        Size.PlatformDefault = False
+        XRadius = 30.000000000000000000
+        YRadius = 30.000000000000000000
+        OnClick = ProcessRectangleClick
+        object txtProductNm: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 60.000000000000000000
+          Size.Width = 554.000000000000000000
+          Size.Height = 50.000000000000000000
+          Size.PlatformDefault = False
+          Text = #50672#54924#50896#44428
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 44.000000000000000000
+          TextSettings.Font.StyleExt = {00080000000000000004000000}
+          TextSettings.FontColor = xFF212225
+          TextSettings.HorzAlign = Leading
+        end
+        object txtOption1: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 218.000000000000000000
+          Size.Width = 424.000000000000000000
+          Size.Height = 42.000000000000000000
+          Size.PlatformDefault = False
+          Text = #51060#50857#50836#44552' '#54624#51064
+          TextSettings.Font.Family = 'Prompt'
+          TextSettings.Font.Size = 28.000000000000000000
+          TextSettings.Font.StyleExt = {00050000000000000004000000}
+          TextSettings.FontColor = xFF212225
+          TextSettings.HorzAlign = Leading
+        end
+        object txtOption2: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 260.000000000000000000
+          Size.Width = 424.000000000000000000
+          Size.Height = 42.000000000000000000
+          Size.PlatformDefault = False
+          Text = #54252#51064#53944' '#51201#47549' 5%'
+          TextSettings.Font.Family = 'Prompt'
+          TextSettings.Font.Size = 28.000000000000000000
+          TextSettings.Font.StyleExt = {00050000000000000004000000}
+          TextSettings.FontColor = xFF212225
+          TextSettings.HorzAlign = Leading
+        end
+        object txtOption3: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 302.000000000000000000
+          Size.Width = 424.000000000000000000
+          Size.Height = 42.000000000000000000
+          Size.PlatformDefault = False
+          Text = #45824#54868#47308' '#47924#47308
+          TextSettings.Font.Family = 'Prompt'
+          TextSettings.Font.Size = 28.000000000000000000
+          TextSettings.Font.StyleExt = {00050000000000000004000000}
+          TextSettings.FontColor = xFF212225
+          TextSettings.HorzAlign = Leading
+        end
+        object txtDate: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 120.000000000000000000
+          Size.Width = 554.000000000000000000
+          Size.Height = 42.000000000000000000
+          Size.PlatformDefault = False
+          Text = '2023.02.04~2024.02.23'
+          TextSettings.Font.Family = 'Prompt'
+          TextSettings.Font.Size = 28.000000000000000000
+          TextSettings.Font.StyleExt = {00050000000000000004000000}
+          TextSettings.FontColor = xFF212225
+          TextSettings.HorzAlign = Leading
+        end
+        object txtAmt: TText
+          Position.X = 510.000000000000000000
+          Position.Y = 281.000000000000000000
+          Size.Width = 320.000000000000000000
+          Size.Height = 70.000000000000000000
+          Size.PlatformDefault = False
+          Text = '30,000'#50896
+          TextSettings.Font.Family = 'Prompt'
+          TextSettings.Font.Size = 46.000000000000000000
+          TextSettings.Font.StyleExt = {00050000000000000004000000}
+          TextSettings.FontColor = xFF3D55F5
+          TextSettings.HorzAlign = Trailing
+        end
+      end
+    end
+    object Timer: TTimer
+      Enabled = False
+      OnTimer = TimerTimer
+      Left = 360
+      Top = 1864
+    end
+    object recBtn: TRectangle
+      Align = Bottom
+      Fill.Color = claNull
+      Position.Y = 1682.000000000000000000
+      Size.Width = 1080.000000000000000000
+      Size.Height = 238.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      object CardRectangle: TRectangle
+        Fill.Color = xFF3D55F5
+        Position.X = 60.000000000000000000
+        Size.Width = 460.000000000000000000
+        Size.Height = 158.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Thickness = 0.000000000000000000
+        XRadius = 30.000000000000000000
+        YRadius = 30.000000000000000000
+        OnClick = CardRectangleClick
+        object Text9: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 32.000000000000000000
+          Size.Width = 360.000000000000000000
+          Size.Height = 52.000000000000000000
+          Size.PlatformDefault = False
+          Text = #52852#46300#44208#51228
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 46.000000000000000000
+          TextSettings.Font.StyleExt = {00070000000000000004000000}
+          TextSettings.FontColor = claWhite
+          OnClick = CardRectangleClick
+        end
+        object Text11: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 94.000000000000000000
+          Size.Width = 360.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          Text = '('#49340#49457#54168#51060')'
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 26.000000000000000000
+          TextSettings.FontColor = claWhite
+          OnClick = CardRectangleClick
+        end
+      end
+      object EasyRectangle: TRectangle
+        Fill.Color = xFF3D55F5
+        Margins.Left = 20.000000000000000000
+        Position.X = 560.000000000000000000
+        Size.Width = 460.000000000000000000
+        Size.Height = 158.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Thickness = 0.000000000000000000
+        XRadius = 30.000000000000000000
+        YRadius = 30.000000000000000000
+        OnClick = EasyRectangleClick
+        object Text15: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 94.000000000000000000
+          Size.Width = 360.000000000000000000
+          Size.Height = 30.000000000000000000
+          Size.PlatformDefault = False
+          Text = '(PAYCO/'#52852#52852#50724'/'#45348#51060#48260')'
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 26.000000000000000000
+          TextSettings.FontColor = claWhite
+        end
+        object Text16: TText
+          Position.X = 50.000000000000000000
+          Position.Y = 32.000000000000000000
+          Size.Width = 360.000000000000000000
+          Size.Height = 52.000000000000000000
+          Size.PlatformDefault = False
+          Text = #44036#54200#44208#51228
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 46.000000000000000000
+          TextSettings.Font.StyleExt = {00070000000000000004000000}
+          TextSettings.FontColor = claWhite
+        end
+      end
+    end
+  end
+end

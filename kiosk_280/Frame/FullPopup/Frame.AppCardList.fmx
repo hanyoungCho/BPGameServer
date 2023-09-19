@@ -1,0 +1,106 @@
+object FullPopupAppCardList: TFullPopupAppCardList
+  Size.Width = 960.000000000000000000
+  Size.Height = 1260.000000000000000000
+  Size.PlatformDefault = False
+  object LayoutBG: TLayout
+    Align = Client
+    Size.Width = 960.000000000000000000
+    Size.Height = 1260.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object recBg: TRectangle
+      Align = Client
+      Fill.Color = claWhite
+      Size.Width = 960.000000000000000000
+      Size.Height = 1260.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      XRadius = 30.000000000000000000
+      YRadius = 30.000000000000000000
+    end
+  end
+  object Layout: TLayout
+    Align = Client
+    Size.Width = 960.000000000000000000
+    Size.Height = 1260.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object recBtn: TRectangle
+      Align = Bottom
+      Fill.Color = claNull
+      Position.Y = 1072.000000000000000000
+      Size.Width = 960.000000000000000000
+      Size.Height = 188.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+      object recCancel: TRectangle
+        Fill.Color = xFFE7EAFF
+        Position.X = 60.000000000000000000
+        Size.Width = 405.000000000000000000
+        Size.Height = 128.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Color = xFF3D55F5
+        Stroke.Thickness = 3.000000000000000000
+        XRadius = 30.000000000000000000
+        YRadius = 30.000000000000000000
+        OnClick = recCancelClick
+        object Text17: TText
+          Align = Client
+          HitTest = False
+          Size.Width = 405.000000000000000000
+          Size.Height = 128.000000000000000000
+          Size.PlatformDefault = False
+          Text = #52712#49548
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 46.000000000000000000
+          TextSettings.Font.StyleExt = {00070000000000000004000000}
+          TextSettings.FontColor = xFF3D55F5
+        end
+      end
+      object recOk: TRectangle
+        Fill.Color = xFF3D55F5
+        Position.X = 495.000000000000000000
+        Size.Width = 405.000000000000000000
+        Size.Height = 128.000000000000000000
+        Size.PlatformDefault = False
+        Stroke.Thickness = 0.000000000000000000
+        XRadius = 30.000000000000000000
+        YRadius = 30.000000000000000000
+        OnClick = recOkClick
+        object Text18: TText
+          Align = Client
+          HitTest = False
+          Size.Width = 405.000000000000000000
+          Size.Height = 128.000000000000000000
+          Size.PlatformDefault = False
+          Text = #44208#51228#54616#44592
+          TextSettings.Font.Family = 'NanumSquareRound'
+          TextSettings.Font.Size = 46.000000000000000000
+          TextSettings.Font.StyleExt = {00070000000000000004000000}
+          TextSettings.FontColor = claWhite
+        end
+      end
+    end
+    object recList: TRectangle
+      Fill.Color = claNull
+      Position.X = 100.000000000000000000
+      Position.Y = 232.000000000000000000
+      Size.Width = 760.000000000000000000
+      Size.Height = 720.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+    end
+    object Text1: TText
+      Position.X = 110.000000000000000000
+      Position.Y = 100.000000000000000000
+      Size.Width = 740.000000000000000000
+      Size.Height = 58.000000000000000000
+      Size.PlatformDefault = False
+      Text = #44036#54200#44208#51228' '#49440#53469
+      TextSettings.Font.Family = 'NanumSquareRound'
+      TextSettings.Font.Size = 50.000000000000000000
+      TextSettings.Font.StyleExt = {00080000000000000004000000}
+      TextSettings.FontColor = xFF212225
+    end
+  end
+end

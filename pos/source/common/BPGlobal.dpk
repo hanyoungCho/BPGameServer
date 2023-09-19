@@ -1,0 +1,64 @@
+package BPGlobal;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'BowlingPick Framework Common Library'}
+{$RUNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  vclwinx,
+  SBPluginR280,
+  SBVCL280,
+  soaprtl,
+  unidac280,
+  dac280,
+  vclAbsDBd28,
+  IndySystem,
+  IndyProtocols,
+  IndyCore,
+  EhLib280,
+  cxGridRS28,
+  CCPack;
+
+contains
+  Common.LayeredForm in 'Common.LayeredForm.pas' {LayeredForm},
+  Common.LayeredWindow in 'Common.LayeredWindow.pas',
+  uPaycoNewModule in 'van\uPaycoNewModule.pas',
+  Common.BPDM in 'Common.BPDM.pas' {BPDM: TDataModule},
+  Common.BPGlobal in 'Common.BPGlobal.pas',
+  Common.BPCommonLib in 'Common.BPCommonLib.pas',
+  Common.BPMsgBox in 'Common.BPMsgBox.pas' {BPMsgBoxForm},
+  Common.BPLaneContainer in 'Common.BPLaneContainer.pas' {BPLaneContainer: TBox},
+  Common.BPComUtils in 'Common.BPComUtils.pas',
+  Common.BPReceiptPrint in 'Common.BPReceiptPrint.pas',
+  Common.BPCalendar in 'Common.BPCalendar.pas' {BPCalendarForm},
+  Common.BPInputBox in 'Common.BPInputBox.pas' {BPInputBoxForm},
+  Common.BPZipCode in 'Common.BPZipCode.pas' {BPZipCodeForm};
+
+end.

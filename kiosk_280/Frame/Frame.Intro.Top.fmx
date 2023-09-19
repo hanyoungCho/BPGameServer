@@ -1,0 +1,23 @@
+object IntroTop: TIntroTop
+  Size.Width = 1080.000000000000000000
+  Size.Height = 300.000000000000000000
+  Size.PlatformDefault = False
+  object MediaPlayerControl: TMediaPlayerControl
+    Size.Width = 1080.000000000000000000
+    Size.Height = 300.000000000000000000
+    Size.PlatformDefault = False
+    Align = Client
+    MediaPlayer = MediaPlayer
+    Visible = False
+  end
+  object Timer: TTimer
+    Enabled = False
+    OnTimer = TimerTimer
+    Left = 48
+    Top = 88
+  end
+  object MediaPlayer: TMediaPlayer
+    Left = 128
+    Top = 184
+  end
+end

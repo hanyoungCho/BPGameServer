@@ -1,0 +1,21 @@
+object SelectBoxFloor: TSelectBoxFloor
+  Align = Client
+  Size.Width = 1080.000000000000000000
+  Size.Height = 120.000000000000000000
+  Size.PlatformDefault = False
+  OnClick = FrameClick
+  object BGRectangle: TRectangle
+    Align = Client
+    Fill.Color = claBlack
+    Size.Width = 1080.000000000000000000
+    Size.Height = 120.000000000000000000
+    Size.PlatformDefault = False
+    Stroke.Thickness = 0.000000000000000000
+  end
+  object Layout: TLayout
+    Size.Width = 1080.000000000000000000
+    Size.Height = 50.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+  end
+end

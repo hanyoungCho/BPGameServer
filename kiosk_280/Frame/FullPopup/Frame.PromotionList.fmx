@@ -1,0 +1,20 @@
+object FullPopupPrormotionList: TFullPopupPrormotionList
+  Size.Width = 800.000000000000000000
+  Size.Height = 1030.000000000000000000
+  Size.PlatformDefault = False
+  object Layout: TLayout
+    Align = Client
+    Size.Width = 800.000000000000000000
+    Size.Height = 1030.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object Rectangle: TRectangle
+      Align = Client
+      Fill.Color = claNull
+      Size.Width = 800.000000000000000000
+      Size.Height = 1030.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Thickness = 0.000000000000000000
+    end
+  end
+end
