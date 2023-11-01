@@ -5,7 +5,7 @@ object BPDM: TBPDM
   Width = 949
   object LocalDB: TABSDatabase
     CurrentVersion = '7.94 '
-    DatabaseFileName = 'D:\Works\bowlingpick\build\data\BPPOS.db'
+    DatabaseFileName = 'D:\Works\BowlingPick\project\pos\build\data\BPPOS.db'
     DatabaseName = 'DBLocal'
     Exclusive = False
     MaxConnections = 500
@@ -4769,6 +4769,7 @@ object BPDM: TBPDM
       '  , A.lane_shift_method'
       '  , A.lane_shift_cnt'
       '  , A.direction'
+      '  , A.to_cnt'
       '  , A.frame_no'
       '  , A.entry_seq'
       '  , A.bowler_id'

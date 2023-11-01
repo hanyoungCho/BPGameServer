@@ -3,7 +3,7 @@ object BPAssignGameForm: TBPAssignGameForm
   Top = 0
   BorderStyle = bsNone
   Caption = #47676#51200' '#48176#51221#54624' '#47112#51064#51012' '#49440#53469#54616#49901#49884#50724'.'
-  ClientHeight = 675
+  ClientHeight = 711
   ClientWidth = 1260
   Color = clBtnFace
   DoubleBuffered = True
@@ -184,7 +184,7 @@ object BPAssignGameForm: TBPAssignGameForm
     Left = 0
     Top = 88
     Width = 1260
-    Height = 587
+    Height = 623
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 5
@@ -204,7 +204,7 @@ object BPAssignGameForm: TBPAssignGameForm
       Left = 1039
       Top = 0
       Width = 216
-      Height = 582
+      Height = 618
       Margins.Left = 5
       Margins.Top = 0
       Margins.Right = 5
@@ -557,13 +557,36 @@ object BPAssignGameForm: TBPAssignGameForm
         TabOrder = 9
         OnClick = btnBaseGameMinIncClick
       end
+      object btnCheckOut: TBitBtn
+        AlignWithMargins = True
+        Left = 11
+        Top = 558
+        Width = 194
+        Height = 50
+        Cursor = crHandPoint
+        Margins.Left = 0
+        Margins.Top = 5
+        Margins.Right = 0
+        Margins.Bottom = 5
+        Caption = #52404#53356' '#50500#50883
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -15
+        Font.Name = 'Pretendard Variable'
+        Font.Style = []
+        ImageIndex = 36
+        ImageName = 'BowlingPins_32px'
+        ParentFont = False
+        TabOrder = 16
+        OnClick = btnCheckOutClick
+      end
     end
     object panAssignList: TPanel
       AlignWithMargins = True
       Left = 5
       Top = 0
       Width = 1029
-      Height = 582
+      Height = 618
       Margins.Left = 5
       Margins.Top = 0
       Margins.Right = 0
@@ -818,7 +841,7 @@ object BPAssignGameForm: TBPAssignGameForm
         Left = 1
         Top = 31
         Width = 1027
-        Height = 502
+        Height = 538
         Margins.Left = 5
         Align = alClient
         BevelInner = bvNone
@@ -1056,6 +1079,7 @@ object BPAssignGameForm: TBPAssignGameForm
             Font.Height = -15
             Font.Name = 'Pretendard Variable'
             Font.Style = []
+            MaxValue = 10.000000000000000000
             ParentFont = False
             ReadOnly = True
             TabOrder = 8
@@ -1195,7 +1219,7 @@ object BPAssignGameForm: TBPAssignGameForm
       object panAssignListFooter: TPanel
         AlignWithMargins = True
         Left = 6
-        Top = 536
+        Top = 572
         Width = 1017
         Height = 40
         Margins.Left = 5

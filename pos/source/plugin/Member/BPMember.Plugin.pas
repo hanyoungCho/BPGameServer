@@ -182,7 +182,7 @@ type
     procedure ProcessMessages(AMsg: TPluginMessage);
     procedure ClearMember;
     procedure LoadMember(const AMemberNo: string);
-    procedure SelectedMember(const AMemberNo: string); overload;
+    procedure SelectedMember(const AMemberNo, AMemberDiv: string); overload;
     procedure SelectedMember(const AMemberNo, ADCFeeDiv, AProdCode: string; const AMembershipSeq: Integer; const AShoesFree: Boolean); overload;
     procedure RefreshDataSet(const AFullRefresh: Boolean; const ASearchType: ShortInt=CO_SEARCH_NONE; ASearchValue: string=''); overload;
     procedure RefreshDataSet(const AFullRefresh: Boolean; const ASearchType: ShortInt; ASearchValue: string; const ASearchType2: ShortInt; ASearchValue2: string); overload;
@@ -442,7 +442,7 @@ begin
             DataMode := CO_DATA_MODE_VIEW;
           end;
         CO_DATA_MODE_SELECT:
-          SelectedMember(FieldByName('member_no').AsString);
+          SelectedMember(FieldByName('member_no').AsString, FieldByName('member_div').AsString);
       end;
   finally
     FWorking := False;
@@ -568,10 +568,12 @@ begin
           btnGotoAddMember.Enabled := False;
         if not FSearchValue.IsEmpty then
           RefreshDataSet(True, FSearchType, FSearchValue, FSearchType2, FSearchValue2);
+        {
         case FBaseGameDiv of
           CO_RATEPLAN_GAME: btnSelectMembership.Caption := '게임제' + _CRLF + '게임상품 선택';
           CO_RATEPLAN_TIME: btnSelectMembership.Caption := '시간제' + _CRLF + '게임상품 선택';
         end;
+        }
       end;
     CO_DATA_MODE_VIEW:
       begin
@@ -746,9 +748,10 @@ begin
   end;
 end;
 
-procedure TBPMemberForm.SelectedMember(const AMemberNo: string);
+procedure TBPMemberForm.SelectedMember(const AMemberNo, AMemberDiv: string);
 begin
-  SelectedMember(AMemberNo, '', '', 0, False);
+  //SelectedMember(AMemberNo, '', '', 0, False);
+  SelectedMember(AMemberNo, AMemberDiv, '', 0, False);
 end;
 procedure TBPMemberForm.SelectedMember(const AMemberNo, ADCFeeDiv, AProdCode: string; const AMembershipSeq: Integer; const AShoesFree: Boolean);
 var

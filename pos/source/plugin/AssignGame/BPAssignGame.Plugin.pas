@@ -1,5 +1,4 @@
 (*******************************************************************************
-
   Project     : 볼링픽 POS 시스템
   Title       : 게임 배정 플러그인
   Author      : 이선우
@@ -8,14 +7,10 @@
     Version   Date         Remark
     --------  ----------   -----------------------------------------------------
     1.0.0.0   2023-01-04   Initial Release.
-
   CopyrightⓒSolbiPOS Co., Ltd. 2008-2023 All rights reserved.
-
 *******************************************************************************)
 unit BPAssignGame.Plugin;
-
 interface
-
 uses
   { Native }
   WinApi.Windows, WinApi.Messages, System.Classes, System.SysUtils, Vcl.Forms, Vcl.Controls,
@@ -26,9 +21,7 @@ uses
   DBCtrlsEh,
   { Project }
   Common.BPGlobal;
-
 {$I ..\..\common\Common.BPCommon.inc}
-
 const
   LWM_BASE_LANE_NO    = CO_WM_USER + 100;
   LWM_BOWLER_COUNT    = CO_WM_USER + 101;
@@ -39,29 +32,23 @@ const
   LWM_TOTAL_COUNT     = CO_WM_USER + 106;
   LWM_TOTAL_MIN       = CO_WM_USER + 107;
   LWM_TOTAL_AMT       = CO_WM_USER + 108;
-
   LC_LIMIT_BOWLER     = 6;
   LC_LIMIT_GAME_COUNT = 10;
   LC_LIMIT_GAME_MIN   = 600;
-
   LC_ID_DRAG_DROP = 'DragDrop';
-
 type
   TLaneNoPanel = class(TPanel)
     StatusPanel: TPanel;
   private
     FLaneNo: ShortInt;
     FLaneStatus: Shortint;
-
     procedure SetLaneStatus(const AValue: Shortint);
   public
     constructor Create(AOwner: TComponent; const AIndex: ShortInt; AParent: TWinControl); reintroduce;
     destructor Destroy; override;
-
     property LaneNo: Shortint read FLaneNo write FLaneNo default 0;
     property LaneStatus: Shortint read FLaneStatus write SetLaneStatus default 0;
   end;
-
   TAssignControl = class(TPanel)
     AssignedPanel: TPanel;
     DragReorderImage: TImage;
@@ -82,7 +69,6 @@ type
     CheckBoxShoesFree: TCheckBox;
     EditChargeAmt: TDBNumberEditEh;
     ButtonRemoveBowler: TBitBtn;
-
     procedure OnAssignMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure OnAssignDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure OnAssignDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -112,6 +98,7 @@ type
     FBuyGameCount: Integer;
     FBuyGameMin: Integer;
     FGameProgress: Integer;
+    FGameToCnt: Integer;
     FFeeDiv: string;
     FProdDiv: string;
     FProdDetailDiv: string;
@@ -132,7 +119,6 @@ type
     FShoesFree: Boolean;
     FChargeAmt: Integer;
     FEnableBuy: Boolean;
-
     procedure SetItemIndex(const AValue: ShortInt);
     procedure SetAssignedGame(const AValue: Boolean);
     procedure SetLaneNo(const AValue: ShortInt);
@@ -142,6 +128,7 @@ type
     procedure SetGameCount(const AValue: Integer);
     procedure SetGameMin(const AValue: Integer);
     procedure SetGameProgress(const AValue: Integer);
+    procedure SetGameToCnt(const AValue: Integer);
     procedure SetBuyGameCount(const AValue: Integer);
     procedure SetBuyGameMin(const AValue: Integer);
     procedure SetGameDiv(const AValue: ShortInt);
@@ -158,7 +145,6 @@ type
   public
     constructor Create(AOwner: TComponent; const AItemIndex: ShortInt; const AParent: TWinControl); reintroduce;
     destructor Destroy; override;
-
     property ItemIndex: ShortInt read FItemIndex write SetItemIndex default 0;
     property AssignedGame: Boolean read FAssignedGame write SetAssignedGame default False;
     property LaneNo: ShortInt read FLaneNo write SetLaneNo default 0;
@@ -176,6 +162,7 @@ type
     property BuyGameCount: Integer read FBuyGameCount write SetBuyGameCount default 0;
     property BuyGameMin: Integer read FBuyGameMin write SetBuyGameMin default 0;
     property GameProgress: Integer read FGameProgress write SetGameProgress default 0;
+    property GameToCnt: Integer read FGameToCnt write SetGameToCnt default 0;
     property FeeDiv: string read FFeeDiv write FFeeDiv;
     property ProdDiv: string read FProdDiv write FProdDiv;
     property ProdDetailDiv: string read FProdDetailDiv write FProdDetailDiv;
@@ -197,7 +184,6 @@ type
     property ChargeAmt: Integer read FChargeAmt write SetChargeAmt default 0;
     property EnableBuy: Boolean read FEnableBuy write SetEnableBuy default False;
   end;
-
   TBPAssignGameForm = class(TPluginModule)
     panHeader: TPanel;
     panHeaderToolbar: TPanel;
@@ -264,7 +250,7 @@ type
     btnBaseGameMinInc: TBitBtn;
     _EditMembershipName: TDBEditEh;
     edtUseGameCountTotal: TDBNumberEditEh;
-
+    btnCheckOut: TBitBtn;
     procedure PluginModuleClose(Sender: TObject; var Action: TCloseAction);
     procedure PluginModuleMessage(Sender: TObject; AMsg: TPluginMessage);
     procedure PluginModuleKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -283,10 +269,10 @@ type
     procedure btnDoAssignClick(Sender: TObject);
     procedure edtBaseProdNameClick(Sender: TObject);
     procedure sbxAssignListMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
-
     procedure OnLaneNoPanelClick(Sender: TObject);
     procedure btnBaseGameMinDecClick(Sender: TObject);
     procedure btnBaseGameMinIncClick(Sender: TObject);
+    procedure btnCheckOutClick(Sender: TObject);
   private
     { Private declarations }
     FOwnerId: Integer;
@@ -294,6 +280,7 @@ type
     FTitle: string;
     FBaseLaneNo: ShortInt;
     FBaseAssignNo: string;
+    FBaseLaneStatus: Integer;
     FEditMode: Boolean;
     FCanReserve: Boolean;
     FRallyMode: Boolean;
@@ -306,7 +293,11 @@ type
     FBaseProdCode: string;
     FBaseProdName: string;
     FBaseProdAmt: Integer;
+    FBaseProdGameCnt: Integer;
+    FBaseProdGameMin: Integer;
+    FBaseProdShoesFree: Boolean;
     FBaseGameDiv: ShortInt;
+    FBasePaymentType: Integer;
     FDataSet: TDataSet;
     FEditRecceiptNo: string;
     FGameMinTotal: Integer;
@@ -315,14 +306,12 @@ type
     FLaneNoPanels: TArray<TLaneNoPanel>;
     FGameCountTotal: integer;
     FReserveMode: Boolean;
-
     procedure ProcessMessages(AMsg: TPluginMessage);
     procedure LoadAssignList(const ALaneNo: ShortInt);
     procedure ClearAssignList;
     procedure GetDefaultProdInfo(const AGameDiv: ShortInt);
     procedure UpdateMemberInfo(const AIndex: ShortInt; const AMemberNo: string; const AMembershipSeq: Integer);
-    procedure UpdateProdInfo(const AIndex: ShortInt; const AFeeDiv, AProdDiv, AProdDetailDiv, AProdCode, AProdName: string;
-      const AProdAmt, AMembershipSeq, AUseGameMin: Integer; const AShoesFree: Boolean);
+    procedure UpdateProdInfo(const AIndex: ShortInt; const AFeeDiv, AProdDiv, AProdDetailDiv, AProdCode, AProdName: string; const AProdAmt, AMembershipSeq, AUseGameCnt, AUseGameMin: Integer; const AShoesFree: Boolean);
     function CheckAssignInfo: Boolean;
     procedure ResetAssignList(const ADelete: Boolean; const ALaneNo: ShortInt);
     procedure ResetBowlerId;
@@ -331,7 +320,6 @@ type
     procedure DoAssignGame;
     procedure DoRemoveBowler(const AItemIndex: ShortInt);
     procedure DoResetProdInfo(const AItemIndex: ShortInt);
-
     procedure SetTitle(const AValue: string);
     procedure SetBaseLaneNo(const AValue: ShortInt);
     procedure SetBowlerCount(const AValue: ShortInt);
@@ -351,13 +339,13 @@ type
     { Public declarations }
     constructor Create(AOwner: TComponent; AMsg: TPluginMessage=nil); override;
     destructor Destroy; override;
-
     property Title: string read FTitle write SetTitle;
     property EditMode: Boolean read FEditMode write FEditMode default False;
     property CanReserve: Boolean read FCanReserve write SetCanReserve default False;
     property RallyMode: Boolean read FRallyMode write FRallyMode default False;
     property BaseLaneNo: ShortInt read FBaseLaneNo write SetBaseLaneNo default 0;
     property BaseAssignNo: string read FBaseAssignNo write FBaseAssignNo;
+    property BaseLaneStatus: Integer read FBaseLaneStatus write FBaseLaneStatus;
     property BowlerCount: ShortInt read FBowlerCount write SetBowlerCount default 0;
     property BaseGameCount: Integer read FBaseGameCount write SetBaseGameCount default 0;
     property BaseGameMin: Integer read FBaseGameMin write SetBaseGameMin default 0;
@@ -368,32 +356,29 @@ type
     property BaseProdCode: string read FBaseProdCode write SetBaseProdCode;
     property BaseProdName: string read FBaseProdName write SetBaseProdName;
     property BaseProdAmt: Integer read FBaseProdAmt write SetBaseProdAmt default 0;
+    property BaseProdGameCnt: Integer read FBaseProdGameCnt write FBaseProdGameCnt default 0;
+    property BaseProdGameMin: Integer read FBaseProdGameMin write FBaseProdGameMin default 0;
+    property BaseProdShoesFree: Boolean read FBaseProdShoesFree write FBaseProdShoesFree default False;
+    property BasePaymentType: Integer read FBasePaymentType write FBasePaymentType default 0;
     property GameMinTotal: integer read FGameMinTotal write SetGameMinTotal default 0;
     property GameCountTotal: integer read FGameCountTotal write SetGameCountTotal default 0;
     property ChargeAmtTotal: Integer read FChargeAmtTotal write SetChargeAmtTotal default 0;
   end;
-
 var
   BPAssignGameForm: TBPAssignGameForm;
-
 implementation
-
 uses
   { Native }
   Vcl.Graphics, Vcl.Dialogs, Vcl.ImgList, System.Generics.Defaults, System.Variants, System.Math,
   System.StrUtils,
   { Project }
   Common.BPDM, Common.BPCommonLib, Common.BPMsgBox, Common.LayeredForm;
-
 var
   LF: TLayeredForm;
   FAssignList: TStringList;
   FAssignIndex: ShortInt;
-
 {$R *.dfm}
-
 { TBPAssignGameForm }
-
 (*
 procedure HexToBinTest;
 var
@@ -408,16 +393,13 @@ begin
   UpdateLog(Format('HexToBin.Result = Hex: %s, Bin: %s', [LHexStr, LValue]));
 end;
 *)
-
 constructor TBPAssignGameForm.Create(AOwner: TComponent; AMsg: TPluginMessage);
 begin
   inherited Create(AOwner, AMsg);
-
   SetDoubleBuffered(Self, True);
   MakeRoundedControl(Self);
   LF := TLayeredForm.Create(nil);
   LF.Show;
-
   Global.Plugin.AssignGamePluginId := Self.PluginID;
   FOwnerId := 0;
   FTitle := panHeader.Caption;
@@ -442,7 +424,6 @@ begin
   FNormalClosing := False;
   FAssignIndex := -1;
   FReserveMode := False;
-
   lblPluginVersion.Caption := Format('PLUGIN Ver.%s', [GetModuleVersion(GetModuleName(HInstance))]);
   panAssignInfo.Visible := False;
   panAssignList.Visible := False;
@@ -455,7 +436,7 @@ begin
   edtBaseGameCount.MaxLength := 2;
   btnDoReserve.Enabled := False;
   btnDoAssign.Enabled := False;
-
+  btnCheckOut.Enabled := False;
   FAssignList := TStringList.Create;
   SetLength(FLaneNoPanels, Global.LaneInfo.LaneCount);
   for var I: ShortInt := 0 to Pred(Global.LaneInfo.LaneCount) do
@@ -466,18 +447,18 @@ begin
     FLaneNoPanels[I].OnClick := OnLaneNoPanelClick;
   end;
 
+  GetDefaultProdInfo(BaseGameDiv);
+
   if Assigned(AMsg) then
     ProcessMessages(AMsg);
-end;
 
+end;
 destructor TBPAssignGameForm.Destroy;
 begin
   Global.Plugin.AssignGamePluginId := 0;
   LF.Release;
-
   inherited Destroy;
 end;
-
 procedure TBPAssignGameForm.WndProc(var AMessage: TMessage);
 var
   LValue: Integer;
@@ -515,10 +496,8 @@ begin
     LWM_REFRESH_LANES:
       ResetAssignList((AMessage.WParam = 1), AMessage.LParam);
   end;
-
   inherited WndProc(AMessage);
 end;
-
 procedure TBPAssignGameForm.PluginModuleClose(Sender: TObject; var Action: TCloseAction);
 begin
   panMinimap.Visible := False;
@@ -526,24 +505,21 @@ begin
     FLaneNoPanels[I].Free;
   Action := caFree;
 end;
-
 procedure TBPAssignGameForm.PluginModuleCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   CanClose := FNormalClosing or
     (FAssignList.Count = 0) or
     (BPMsgBox(Self.Handle, mtConfirmation, '확인', '배정 관리 화면을 종료하시겠습니까?', ['예', '아니오']) = mrOK);
 end;
-
 procedure TBPAssignGameForm.PluginModuleMessage(Sender: TObject; AMsg: TPluginMessage);
 begin
   ProcessMessages(AMsg);
 end;
-
 procedure TBPAssignGameForm.ProcessMessages(AMsg: TPluginMessage);
 var
   LIndex, LLaneNo, LStatus: ShortInt;
   LAssignNo, LFeeDiv, LProdDiv, LProdDetailDiv, LMemberNo, LProdCode, LProdName, LDCFeeDiv: string;
-  LProdAmt, LMembershipSeq, LGameMin: Integer;
+  LProdAmt, LMembershipSeq, LGameCnt, LGameMin: Integer;
   LShoesFree: Boolean;
   LDataSet: TDataSet;
 begin
@@ -564,15 +540,21 @@ begin
     end
     else
       FDataSet := Global.LaneInfo.Lanes[Global.LaneInfo.LaneIndex(LLaneNo)].Container.GameDataSet;
-
     BaseLaneNo := LLaneNo;
     if (BaseLaneNo > 0) then
     begin
-      CanReserve := (Global.LaneInfo.Lanes[Global.LaneInfo.LaneIndex(BaseLaneNo)].LaneStatus in [CO_LANE_RESERVED..CO_LANE_END]);
+      //CanReserve := (Global.LaneInfo.Lanes[Global.LaneInfo.LaneIndex(BaseLaneNo)].LaneStatus in [CO_LANE_RESERVED..CO_LANE_END]);
+      if FReserveMode then
+        CanReserve := True
+      else
+        CanReserve := (FDataSet.FieldByName('assign_no').AsString <> EmptyStr);
+
       if CanReserve then
         LoadAssignList(BaseLaneNo)
       else
+      begin
         BowlerCount := 1;
+      end;
     end;
     if FReserveMode then
       Title := '예약 게임 수정'
@@ -600,8 +582,25 @@ begin
     LProdName := AMsg.ParamByString(CPP_PROD_NM);
     LProdAmt := AMsg.ParamByInteger(CPP_VALUE);
     LMembershipSeq := AMsg.ParamByInteger(CPP_MEMBERSHIP_SEQ);
+    LGameCnt := AMsg.ParamByInteger(CPP_GAME_CNT);
+    LGameMin := AMsg.ParamByInteger(CPP_GAME_MIN);
+    UpdateProdInfo(LIndex, LFeeDiv, LProdDiv, LProdDetailDiv, LProdCode, LProdName, LProdAmt, LMembershipSeq, LGameCnt, LGameMin, False);
+  end
+  else if (AMsg.Command = CPC_SEL_PROD_GAME_DEFAULT) then
+  begin
+    LIndex := AMsg.ParamByInteger(CPP_INDEX);
+    {
+    LFeeDiv := AMsg.ParamByString(CPP_FEE_DIV);
+    LProdDiv := AMsg.ParamByString(CPP_PROD_DIV);
+    LProdDetailDiv := AMsg.ParamByString(CPP_PROD_DETAIL_DIV);
+    LProdCode := AMsg.ParamByString(CPP_PROD_CD);
+    LProdName := AMsg.ParamByString(CPP_PROD_NM);
+    LProdAmt := AMsg.ParamByInteger(CPP_VALUE);
+    LMembershipSeq := AMsg.ParamByInteger(CPP_MEMBERSHIP_SEQ);
     LGameMin := AMsg.ParamByInteger(CPP_GAME_MIN);
     UpdateProdInfo(LIndex, LFeeDiv, LProdDiv, LProdDetailDiv, LProdCode, LProdName, LProdAmt, LMembershipSeq, LGameMin, False);
+    }
+    UpdateProdInfo(LIndex, BaseFeeDiv, BaseProdDiv, BaseProdDetailDiv, BaseProdCode, BaseProdName, BaseProdAmt, 0, FBaseProdGameCnt, FBaseProdGameMin, FBaseProdShoesFree);
   end
   else if (AMsg.Command = CPC_SELECT_MEMBER) then
   begin
@@ -625,10 +624,9 @@ begin
               raise Exception.Create(Format('%s 회원은 배정 목록에 이미 등록되어 있습니다.', [Global.MemberInfo.MemberName]));
               Break;
             end;
-
         if not LDCFeeDiv.IsEmpty then
         begin
-          LDataSet := BPDM.GetABSDataSet('SELECT * FROM MEMORY MTProdGame');
+          LDataSet := BPDM.GetABSDataSet('SELECT * FROM MEMORY MTProdGame WHERE membership_yn = False');
           with LDataSet do
           try
             if not Locate('fee_div', LDCFeeDiv, []) then
@@ -640,8 +638,9 @@ begin
             LProdCode := FieldByName('prod_cd').AsString;
             LProdName := FieldByName('prod_nm').AsString;
             LProdAmt := FieldByName('prod_amt').AsInteger;
+            LGameCnt := FieldByName('use_game_cnt').AsInteger;
             LGameMin := FieldByName('use_game_min').AsInteger;
-            UpdateProdInfo(LIndex, LFeeDiv, LProdDiv, LProdDetailDiv, LProdCode, LProdName, LProdAmt, LMembershipSeq, LGameMin, LShoesFree);
+            UpdateProdInfo(LIndex, LFeeDiv, LProdDiv, LProdDetailDiv, LProdCode, LProdName, LProdAmt, LMembershipSeq, LGameCnt, LGameMin, LShoesFree);
           finally
             Close;
             Free;
@@ -656,30 +655,26 @@ begin
     end;
   end;
 end;
-
 procedure TBPAssignGameForm.rdgBaseGameDivClick(Sender: TObject);
 begin
   BaseGameDiv := (TRadioGroup(Sender).ItemIndex + 1);
+  GetDefaultProdInfo(BaseGameDiv);
 end;
-
 procedure TBPAssignGameForm.sbxAssignListMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
   SendMessage(TScrollBox(Sender).Handle, WM_VSCROLL, IfThen(WheelDelta >= 0, SB_LINELEFT, SB_LINERIGHT), 0);
   Handled := True;
 end;
-
 procedure TBPAssignGameForm.PluginModuleKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if (Key = VK_ESCAPE) then
     Self.Close;
 end;
-
 procedure TBPAssignGameForm.panHeaderMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   ReleaseCapture;
   PostMessage(Handle, WM_SYSCOMMAND, $F012, 0);
 end;
-
 procedure TBPAssignGameForm.OnLaneNoPanelClick(Sender: TObject);
 begin
   if FReserveMode then
@@ -705,10 +700,81 @@ begin
       BaseLaneNo := 0;
       ClearAssignList;
     end;
-
     if (FAssignList.Count = 0) then
       BowlerCount := 1;
     BaseLaneNo := LaneNo;
+  end;
+end;
+procedure TBPAssignGameForm.btnCheckOutClick(Sender: TObject);
+var
+  LJobName, LResMsg: string;
+  BI: TArray<TBowlerRec>;
+  LItemCount: Integer;
+  LReceiptNo: String;
+begin
+  LJobName := '체크 아웃';
+
+  if (BPMsgBox(Self.Handle, mtConfirmation, '확인', Format('<B>%d</B> 레인에 <B>', [BaseLaneNo]) + ErrorString(LJobName) + '</B> 명령을 전송하시겠습니까?', ['예', '아니오']) <> mrOk) then
+    Exit;
+
+  try
+    {
+    LSQL := Format('SELECT seq FROM TBPayment WHERE receipt_no = %s;', [ReceiptNo.QuotedString]);
+    LCount := BPDM.GetABSRecordCount(LSQL, LResMsg);
+    if not LResMsg.IsEmpty then
+      raise Exception.Create('결제한 내역을 확인할 수 없습니다.' + _BR + LResMsg);
+    if (LCount > 0) then
+    begin
+      BPMsgBox(Self.Handle, mtWarning, '알림', '취소할 게임/예약의 결제 내역이 존재합니다.' + _BR + '해당 결제 내역을 먼저 취소하여야 합니다.', ['확인'], 5);
+      Exit;
+    end;
+    }
+
+    LItemCount := FAssignList.Count;
+    SetLength(BI, LItemCount);
+
+    for var I: ShortInt := 0 to Pred(LItemCount) do
+    begin
+      with TAssignControl(FAssignList.Objects[I]) do
+      begin
+        LReceiptNo := ReceiptNo;
+        BI[I].EntrySeq := EntrySeq;
+        BI[I].BowlerId := BowlerId;
+        BI[I].BowlerName := IfThen(BowlerName.IsEmpty, BowlerId, BowlerName);
+        BI[I].MemberNo := MemberNo;
+        BI[I].FeeDiv := FeeDiv;
+        BI[I].GameCount := GameCount;
+        BI[I].GameMin := IfThen(GameDiv = CO_RATEPLAN_TIME, GameMin, 0);
+        BI[I].MembershipSeq := MembershipSeq;
+        BI[I].MembershipUseCount := MembershipUseCount;
+        BI[I].MembershipUseMin := MembershipUseMin;
+        BI[I].ShoesRent := ShoesRent;
+        BI[I].ShoesFree := ShoesFree;
+        BI[I].PaymentType := CO_PAYTYPE_DEFERRED;
+        BI[I].ProdInfo.AssignLaneNo := AssignLaneNo;
+        BI[I].ProdInfo.AssignNo := AssignNo;
+        BI[I].ProdInfo.BowlerId := BowlerId;
+        BI[I].ProdInfo.ProdDiv := ProdDiv;
+        BI[I].ProdInfo.ProdDetailDiv := ProdDetailDiv;
+        BI[I].ProdInfo.ProdCode := ProdCode;
+        BI[I].ProdInfo.ProdName := ProdName;
+        BI[I].ProdInfo.ProdAmt := ProdAmt;
+        BI[I].ProdInfo.OrderQty := GameCount;
+      end;
+    end;
+
+    if not BPDM.CheckOut(BaseLaneNo, BaseAssignNo, LReceiptNo, BI, LResMsg) then
+      raise Exception.Create(LResMsg);
+    //SendToMainForm(CPC_GAME_REFRESH_DELAY);
+    //BPMsgBox(Self.Handle, mtInformation, '알림', Format('%s 명령 전송을 완료하였습니다.', [LJobName]), ['확인'], 5);
+
+    FNormalClosing := True;
+    Self.ModalResult := mrOK;
+
+  except
+    on E: Exception do
+      BPMsgBox(Self.Handle, mtWarning, '알림',
+        Format('%s 명령 전송에 실패하였습니다.', [LJobName]) + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
 
@@ -719,12 +785,10 @@ begin
     BaseLaneNo := 0;
   ClearAssignList;
 end;
-
 procedure TBPAssignGameForm.btnCloseClick(Sender: TObject);
 begin
   Self.Close;
 end;
-
 procedure TBPAssignGameForm.btnBaseProdPopupClick(Sender: TObject);
 var
   LResMsg: string;
@@ -737,7 +801,6 @@ begin
       BPMsgBox(Self.Handle, mtError, '알림', '상품 목록을 불러올 수 없습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TBPAssignGameForm.btnBaseProdClearClick(Sender: TObject);
 begin
   BaseFeeDiv := '';
@@ -757,7 +820,6 @@ begin
       ProdAmt := BaseProdAmt;
     end;
 end;
-
 procedure TBPAssignGameForm.btnDoReserveClick(Sender: TObject);
 begin
   if (BPMsgBox(Self.Handle, mtConfirmation, '확인', '이미 사용 중인 레인입니다.' + _BR + '예약대기 상태로 추가 배정하시겠습니까?', ['예', '아니오']) <> mrOK) then
@@ -769,7 +831,6 @@ begin
   ClearAssignList;
   BowlerCount := 1;
 end;
-
 procedure TBPAssignGameForm.btnDoAssignClick(Sender: TObject);
 begin
   try
@@ -778,7 +839,6 @@ begin
     if (BaseGameDiv = CO_RATEPLAN_TIME) and
        (GameMinTotal = 0) then
       raise Exception.Create('시간제 요금 상품이 선택되지 않았습니다.');
-
     if EditMode then
       DoEditGame
     else
@@ -788,46 +848,39 @@ begin
       BPMsgBox(Self.Handle, mtWarning, '알림', '배정 등록 작업에 오류가 발생했습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TBPAssignGameForm.btnBowlerCountDecClick(Sender: TObject);
 begin
   if (BowlerCount > edtBowlerCount.MinValue) then
     BowlerCount := Pred(BowlerCount);
 end;
-
 procedure TBPAssignGameForm.btnBowlerCountIncClick(Sender: TObject);
 begin
   if (BowlerCount < edtBowlerCount.MaxValue) then
     BowlerCount := Succ(BowlerCount);
 end;
-
 procedure TBPAssignGameForm.btnBaseGameCountDecClick(Sender: TObject);
 begin
   if (BaseGameCount > edtBaseGameCount.MinValue) then
     BaseGameCount := Pred(BaseGameCount);
 end;
-
 procedure TBPAssignGameForm.btnBaseGameCountIncClick(Sender: TObject);
 begin
   if (BaseGameCount < edtBaseGameCount.MaxValue) then
     BaseGameCount := Succ(BaseGameCount);
 end;
-
 procedure TBPAssignGameForm.btnBaseGameMinDecClick(Sender: TObject);
 begin
   if (BaseGameMin > edtBaseGameMin.MinValue) then
     BaseGameMin := (BaseGameMin - 10);
 end;
-
 procedure TBPAssignGameForm.btnBaseGameMinIncClick(Sender: TObject);
 begin
   if (BaseGameMin < edtBaseGameMin.MaxValue) then
     BaseGameMin := (BaseGameMin + 10);
 end;
-
 procedure TBPAssignGameForm.LoadAssignList(const ALaneNo: ShortInt);
 var
-  LIndex, LItem: ShortInt;
+  LIndex, LItem, LGameCnt: ShortInt;
 begin
   ClearAssignList;
   EditMode := True;
@@ -844,6 +897,8 @@ begin
       First;
       BaseAssignNo := FieldByName('assign_no').AsString;
       BaseGameDiv := FieldByName('game_div').AsInteger;
+      LGameCnt := FieldByName('game_fin').AsInteger;
+      BaseLaneStatus := FieldByName('lane_status').AsInteger;
       while not Eof do
       begin
         LIndex := FAssignList.AddObject(LIndex.ToString, TAssignControl.Create(nil, LItem, sbxAssignList));
@@ -870,6 +925,7 @@ begin
           MembershipUseMin := FieldByName('membership_use_min').AsInteger;
           BuyGameCount := (GameCount - MembershipUseCount);
           BuyGameMin := (GameMin - MembershipUseMin);
+          GameToCnt := FieldByName('to_cnt').AsInteger;
           GameProgress := FieldByName('game_fin').AsInteger;
           BaseGameCount := GameCount;
           BaseGameMin := GameMin;
@@ -880,13 +936,37 @@ begin
           ProdDetailDiv := FieldByName('prod_detail_div').AsString;
           ShoesRent := FieldByName('shoes_rent_yn').AsBoolean;
           ShoesFree := FieldByName('shoes_free_yn').AsBoolean;
-          ChargeAmt := (ProdAmt * FieldByName('order_qty').AsInteger - FieldByName('dc_amt').AsInteger) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+
+          if (MembershipSeq = 0) and (FieldByName('payment_type').AsInteger = 1) then
+            BasePaymentType := 1;
+
+          if BasePaymentType = 1 then
+          begin
+            ChargeAmt := 0;
+            ButtonProdPopup.Enabled := False;
+            ButtonProdClear.Enabled := False;
+            ButtonGameCountDec.Enabled := False;
+            ButtonGameCountInc.Enabled := False;
+            CheckBoxShoesRent.Enabled := False;
+            ButtonRemoveBowler.Enabled := False;
+          end
+          else
+          begin
+            if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+            begin
+              ChargeAmt := (ProdAmt - FieldByName('dc_amt').AsInteger) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+              ButtonGameCountDec.Enabled := False;
+              ButtonGameCountInc.Enabled := False;
+            end
+            else
+              ChargeAmt := (ProdAmt * FieldByName('order_qty').AsInteger - FieldByName('dc_amt').AsInteger) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+          end;
+
           if (GameCount <> BaseGameCount) then
             BaseGameCount := GameCount;
           if not MemberNo.IsEmpty then
             UpdateMemberInfo(LIndex, MemberNo, MembershipSeq);
         end;
-
         Inc(LItem);
         Next;
       end;
@@ -895,11 +975,25 @@ begin
     FAssignList.EndUpdate;
     EnableControls;
     BowlerCount := RecordCount;
-    btnDoAssign.Enabled := True;
+    btnDoAssign.Enabled := (BaseLaneStatus <> 5);
     btnDoAssign.Caption := '수정 등록';
+    btnCheckOut.Enabled := ((LGameCnt > 0) and (BaseLaneStatus <> 5));
+
+    if BasePaymentType = 1 then
+    begin
+      btnBowlerCountDec.Enabled := False;
+      btnBowlerCountInc.Enabled := False;
+      rdgBaseGameDiv.Enabled := False;
+      btnBaseGameCountDec.Enabled := False;
+      btnBaseGameCountInc.Enabled := False;
+      btnBaseGameMinDec.Enabled := False;
+      btnBaseGameMinInc.Enabled := False;
+      edtBaseProdName.Enabled := False;
+      btnBaseProdPopup.Enabled := False;
+      btnBaseProdClear.Enabled := False;
+    end;
   end;
 end;
-
 procedure TBPAssignGameForm.ClearAssignList;
 begin
   BowlerCount := 0;
@@ -909,8 +1003,8 @@ begin
   rdgBaseGameDiv.ItemIndex := 0;
   btnDoAssign.Enabled := False;
   btnDoAssign.Caption := '배정 등록';
+  btnCheckOut.Enabled := False;
 end;
-
 procedure TBPAssignGameForm.UpdateMemberInfo(const AIndex: ShortInt; const AMemberNo: string; const AMembershipSeq: Integer);
 var
   LResMsg: string;
@@ -918,11 +1012,13 @@ begin
   if not BPDM.QRMembership.Active then
     if not BPDM.GetMembership(AMemberNo, '', '', LResMsg) then
       raise Exception.Create(LResMsg);
-
   with TAssignControl(FAssignList.Objects[AIndex]) do
   try
-    MemberNo := AMemberNo;
-    MemberName := Global.MemberInfo.MemberName;
+    if MemberNo <> AMemberNo then
+    begin
+      MemberNo := AMemberNo;
+      MemberName := Global.MemberInfo.MemberName;
+    end;
     BowlerName := MemberName;
     if (AMembershipSeq > 0) and
        BPDM.QRMembership.Locate('member_no;membership_seq', VarArrayOf([AMemberNo, AMembershipSeq]), []) then
@@ -974,11 +1070,10 @@ begin
     Global.MemberInfo.Clear;
   end;
 end;
-
 procedure TBPAssignGameForm.GetDefaultProdInfo(const AGameDiv: ShortInt);
 var
   LProdCode, LProdDetailDiv, LProdName, LResMsg: string;
-  LProdAmt, LGameMin: Integer;
+  LProdAmt, LGameCnt, LGameMin: Integer;
   LShoesFree: Boolean;
 begin
   try
@@ -994,19 +1089,18 @@ begin
       else
         raise Exception.Create('사용할 수 없는 요금제 구분 코드: ' + AGameDiv.ToString);
     end;
-
     with BPDM.QRProdGame do
     try
       DisableControls;
       if not Locate('prod_cd', LProdCode, []) then
         raise Exception.Create('등록되지 않은 요금제 상품 코드: ' + LProdCode);
-
       LProdDetailDiv := FieldByName('prod_detail_div').AsString;
       LProdName := FieldByName('prod_nm').AsString;
       LProdAmt := FieldByName('prod_amt').AsInteger;
       LShoesFree := FieldByName('shoes_free_yn').AsBoolean;
+      LGameCnt := BPDM.QRProdGame.FieldByName('use_game_cnt').AsInteger;
       LGameMin := BPDM.QRProdGame.FieldByName('use_game_min').AsInteger;
-      UpdateProdInfo(-1, CO_GAMEFEE_BASIC, CO_PROD_GAME, LProdDetailDiv, LProdCode, LProdName, LProdAmt, 0, LGameMin, False);
+      UpdateProdInfo(-1, CO_GAMEFEE_BASIC, CO_PROD_GAME, LProdDetailDiv, LProdCode, LProdName, LProdAmt, 0, LGameCnt, LGameMin, False);
     finally
       EnableControls;
     end;
@@ -1015,9 +1109,8 @@ begin
       BPMsgBox(Self.Handle, mtWarning, '알림', '기본 요금제 상품 정보를 조회할 수 없습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TBPAssignGameForm.UpdateProdInfo(const AIndex: ShortInt; const AFeeDiv, AProdDiv, AProdDetailDiv, AProdCode, AProdName: string;
-  const AProdAmt, AMembershipSeq, AUseGameMin: Integer; const AShoesFree: Boolean);
+  const AProdAmt, AMembershipSeq, AUseGameCnt, AUseGameMin: Integer; const AShoesFree: Boolean);
 begin
   if (AIndex = -1) then //전체 적용
   begin
@@ -1027,6 +1120,9 @@ begin
     BaseProdCode := AProdCode;
     BaseProdName := AProdName;
     BaseProdAmt := AProdAmt;
+    BaseProdGameCnt := AUseGameCnt;
+    BaseProdGameMin := AUseGameMin;
+    BaseProdShoesFree := AShoesFree;
     for var I: ShortInt := 0 to Pred(FAssignList.Count) do
       with TAssignControl(FAssignList.Objects[I]) do
       begin
@@ -1038,6 +1134,18 @@ begin
         ProdAmt := AProdAmt;
         GameMin := IfThen(GameDiv = CO_RATEPLAN_TIME, IfThen(AUseGameMin < BaseGameMin, BaseGameMin, AUseGameMin), 0);
         ShoesFree := AShoesFree;
+
+        if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+        begin
+          GameCount := AUseGameCnt;
+          ButtonGameCountDec.Enabled := False;
+          ButtonGameCountInc.Enabled := False;
+        end
+        else
+        begin
+          ButtonGameCountDec.Enabled := True;
+          ButtonGameCountInc.Enabled := True;
+        end;
      end;
   end
   else //각 배정 패널 별 수정
@@ -1048,6 +1156,11 @@ begin
         with TAssignControl(FAssignList.Objects[I]) do
         begin
           FeeDiv := AFeeDiv;
+          ProdName := AProdName;
+          ProdAmt := AProdAmt;
+          GameMin := IfThen(GameDiv = CO_RATEPLAN_TIME, AUseGameMin, 0);
+          ShoesFree := AShoesFree;
+
           if (AMembershipSeq > 0) then
           begin
             MembershipProdDiv := AProdDiv;
@@ -1055,28 +1168,37 @@ begin
             MembershipProdCode := AProdCode;
             MembershipSeq := AMembershipSeq;
             MembershipUseCount := 1;
-            if ProdCode.IsEmpty then
-              BuyGameCount := 0;
+            //if ProdCode.IsEmpty then
+              //BuyGameCount := 0
+            ProdCode := AProdCode;
           end
           else
           begin
             ProdDiv := AProdDiv;
             ProdDetailDiv := AProdDetailDiv;
             ProdCode := AProdCode;
-            BuyGameCount := 1;
+            //BuyGameCount := 1;
+            BuyGameCount := AUseGameCnt;
+
+            if BuyGameCount > 1 then
+            begin
+              ButtonGameCountDec.Enabled := False;
+              ButtonGameCountInc.Enabled := False;
+            end
+            else
+            begin
+              ButtonGameCountDec.Enabled := True;
+              ButtonGameCountInc.Enabled := True;
+            end;
+
             if MembershipProdCode.IsEmpty then
               MembershipUseCount := 0;
           end;
-          ProdName := AProdName;
-          ProdAmt := AProdAmt;
-          GameMin := IfThen(GameDiv = CO_RATEPLAN_TIME, AUseGameMin, 0);
-          ShoesFree := AShoesFree;
         end;
         Break;
       end;
   end;
 end;
-
 function TBPAssignGameForm.CheckAssignInfo: Boolean;
 begin
   Result := False;
@@ -1092,7 +1214,6 @@ begin
       BPMsgBox(Self.Handle, mtWarning, '알림', '필수 배정 정보가 누락되었습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TBPAssignGameForm.ResetAssignList(const ADelete: Boolean; const ALaneNo: ShortInt);
 begin
   if ADelete then
@@ -1100,15 +1221,29 @@ begin
       if (TAssignControl(FAssignList.Objects[I]).LaneNo = ALaneNo) then
         DoRemoveBowler(TAssignControl(FAssignList.Objects[I]).ItemIndex);
 end;
-
 procedure TBPAssignGameForm.ResetBowlerId;
+var
+  sBowlerId: String;
+  nByte: Byte;
 begin
-  for var I: ShortInt := 0 to Pred(FAssignList.Count) do
-    with TAssignControl(FAssignList.Objects[I]) do
-      if BowlerId.IsEmpty then
-        BowlerId := Format('%.2d%s', [BaseLaneNo, Char(65 + I)])
-end;
+  nByte := 65;
 
+  for var I: ShortInt := 0 to Pred(FAssignList.Count) do
+  begin
+    with TAssignControl(FAssignList.Objects[I]) do
+    begin
+      if BowlerId.IsEmpty then
+        //BowlerId := Format('%.2d%s', [BaseLaneNo, Char(65 + I)])
+        BowlerId := Format('%.2d%s', [BaseLaneNo, Char(nByte)])
+      else
+      begin
+        sBowlerId := copy(BowlerId, 3, 1);
+        nByte := Ord(sBowlerId[1]) + 1;
+      end;
+    end;
+  end;
+
+end;
 function TBPAssignGameForm.SelectGameProd(var AResMsg: string): Boolean;
 var
   PM: TPluginMessage;
@@ -1141,7 +1276,6 @@ begin
       AResMsg := E.Message;
   end;
 end;
-
 procedure TBPAssignGameForm.DoAssignGame;
 var
   GA: TArray<TGameAssignRec>;
@@ -1195,12 +1329,11 @@ begin
              not ShoesFree then
             LChargeAmt := LChargeAmt + Global.StoreInfo.ShoesRentProdAmt;
         end;
-
       if (LChargeAmt > 0) and
          not BPDM.MakeNewReceipt(BaseLaneNo, LReceiptNo, LResMsg) then //var LReceiptNo
         raise Exception.Create(LResMsg);
-      if not BPDM.SetHoldLane(BaseLaneNo, True, LResMsg) then
-        raise Exception.Create(LResMsg);
+      //if not BPDM.SetHoldLane(BaseLaneNo, True, LResMsg) then
+        //raise Exception.Create(LResMsg);
       if not BPDM.AssignGame(False, LReceiptNo, GA, LResMsg) then
         raise Exception.Create(LResMsg);
       FNormalClosing := True;
@@ -1213,7 +1346,6 @@ begin
     FWorking := False;
   end;
 end;
-
 procedure TBPAssignGameForm.DoEditGame;
 var
   BI: TBowlerRec;
@@ -1259,7 +1391,6 @@ begin
           BI.ProdInfo.ProdName := ProdName;
           BI.ProdInfo.ProdAmt := ProdAmt;
           BI.ProdInfo.OrderQty := GameCount;
-
           LExist := FDataSet.Locate('assign_no;bowler_id', VarArrayOf([AssignNo, BowlerId]), []);
           //Updatelog(Format('DoEditGame.Locate(%s) = AssignNo: %s, BowlerId: %s', [BoolToStr(LExist, True), AssignNo, BowlerId]));
           if LExist then
@@ -1356,7 +1487,6 @@ begin
           if not BPDM.UpdateReceipt(LReceiptNo, LResMsg) then
             raise Exception.Create(LResMsg);
         end;
-
       FNormalClosing := True;
       Self.ModalResult := mrOK;
     except
@@ -1368,12 +1498,15 @@ begin
     FWorking := False;
   end;
 end;
-
 procedure TBPAssignGameForm.DoRemoveBowler(const AItemIndex: ShortInt);
 var
   LAssignedGame: Boolean;
   LAssignNo, LBowlerId, LBowlerName, LResMsg: string;
+  bDelete: Boolean;
+  nGameToCnt, nGameProgress, nFrame: Integer;
 begin
+  if (BaseLaneStatus = 5) then
+    Exit;
   if (AItemIndex < 0) then
     Exit;
   try
@@ -1383,49 +1516,79 @@ begin
       LAssignNo := AssignNo;
       LBowlerId := BowlerId;
       LBowlerName := BowlerName;
+      nGameToCnt := GameToCnt;
+      nGameProgress := GameProgress;
+
       if LBowlerName.IsEmpty then
         LBowlerName := LBowlerId
       else if (LBowlerId <> LBowlerName) then
         LBowlerName := Format('%s-%s', [LBowlerId, LBowlerName]);
     end;
 
+    bDelete := True;
+
     if LAssignedGame and
        EditMode then
     begin
-      if (BPMsgBox(Self.Handle, mtConfirmation, '볼러 삭제', ErrorString(LBowlerName) + ' 볼러의 배정 및 주문 내역이 모두 삭제됩니다.' + _BR +
-            '볼러 삭제를 진행하시겠습니까?', ['예', '아니오']) <> mrOK) then
-        Exit;
-      if not BPDM.RemoveBowler(LAssignNo, LBowlerId, LResMsg) then
-        raise Exception.Create(LResMsg);
-      if not BPDM.DeleteABSRecord('TBSaleItem', Format('assign_no = %s AND bowler_id = %s', [LAssignNo.QuotedString, LBowlerId.QuotedString]), True, LResMsg) then
-        raise Exception.Create(LResMsg);
-      SendToMainForm(CPC_GAME_REFRESH_FORCE);
+
+      //chy test - 게임 완료 프레임 옵션 시 적용 필요
+      nFrame := (4 - 1) * 2;
+      if (nGameProgress > 0) or (nGameToCnt > nFrame) then
+        bDelete := False;
+
+      if bDelete = true then
+      begin
+        if (BPMsgBox(Self.Handle, mtConfirmation, '볼러 삭제', ErrorString(LBowlerName) + ' 볼러의 배정 및 주문 내역이 모두 삭제됩니다.' + _BR +
+              '볼러 삭제를 진행하시겠습니까?', ['예', '아니오']) <> mrOK) then
+          Exit;
+        if not BPDM.RemoveBowler(LAssignNo, LBowlerId, LResMsg) then
+          raise Exception.Create(LResMsg);
+        if not BPDM.DeleteABSRecord('TBSaleItem', Format('assign_no = %s AND bowler_id = %s', [LAssignNo.QuotedString, LBowlerId.QuotedString]), True, LResMsg) then
+          raise Exception.Create(LResMsg);
+        SendToMainForm(CPC_GAME_REFRESH_FORCE);
+      end
+      else
+      begin
+        if (BPMsgBox(Self.Handle, mtConfirmation, '볼러 삭제',
+              ErrorString(LBowlerName) + ' 볼러의 일시 정지를 진행하시겠습니까?', ['예', '아니오']) <> mrOk) then
+          Exit;
+        if not BPDM.SetBowlerPause(LAssignNo, LBowlerId, True, LResMsg) then
+          raise Exception.Create(LResMsg);
+        SendToMainForm(CPC_GAME_REFRESH_FORCE);
+      end;
     end;
 
-    try
-      TAssignControl(FAssignList.Objects[AItemIndex]).Free;
-      if (FAssignList.Count > 0) then
-        for var I: ShortInt := AItemIndex to (FAssignList.Count - 2) do
-        begin
-          FAssignList.Objects[I] := FAssignList.Objects[I + 1];
-          TAssignControl(FAssignList.Objects[I]).ItemIndex := I;
-        end;
-      FAssignList.Delete(Pred(FAssignList.Count));
-      FBowlerCount := FAssignList.Count;
-      edtBowlerCount.Value := FAssignList.Count;
-    finally
-      btnDoAssign.Enabled := (FAssignList.Count > 0);
+    if bDelete = True then
+    begin
+      try
+        TAssignControl(FAssignList.Objects[AItemIndex]).Free;
+        if (FAssignList.Count > 0) then
+          for var I: ShortInt := AItemIndex to (FAssignList.Count - 2) do
+          begin
+            FAssignList.Objects[I] := FAssignList.Objects[I + 1];
+            TAssignControl(FAssignList.Objects[I]).ItemIndex := I;
+          end;
+        FAssignList.Delete(Pred(FAssignList.Count));
+        FBowlerCount := FAssignList.Count;
+        edtBowlerCount.Value := FAssignList.Count;
+      finally
+        btnDoAssign.Enabled := (FAssignList.Count > 0);
+      end;
     end;
 
     if LAssignedGame and
        EditMode then
-      BPMsgBox(Self.Handle, mtInformation, '알림', Format('%s 볼러가 삭제되었습니다.', [LBowlerName]), ['확인'], 5);
+    begin
+      if bDelete = true then
+        BPMsgBox(Self.Handle, mtInformation, '알림', Format('%s 볼러가 삭제되었습니다.', [LBowlerName]), ['확인'], 5)
+      else
+        BPMsgBox(Self.Handle, mtInformation, '알림', Format('%s 볼러의 명령 전송을 완료하였습니다.', [LBowlerName]), ['확인'], 5);
+    end;
   except
     on E: Exception do
       BPMsgBox(Self.Handle, mtError, '알림', '볼러 삭제에 실패하였습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TBPAssignGameForm.DoResetProdInfo(const AItemIndex: ShortInt);
 begin
   if (AItemIndex < 0) then
@@ -1440,12 +1603,10 @@ begin
     ProdAmt := BaseProdAmt;
   end;
 end;
-
 procedure TBPAssignGameForm.edtBaseProdNameClick(Sender: TObject);
 begin
   btnBaseProdPopup.Click;
 end;
-
 procedure TBPAssignGameForm.SetBaseLaneNo(const AValue: ShortInt);
 begin
   if (FBaseLaneNo <> AValue) then
@@ -1459,7 +1620,6 @@ begin
     ResetBowlerId;
   end;
 end;
-
 procedure TBPAssignGameForm.SetCanReserve(const AValue: Boolean);
 begin
   if (FCanReserve <> AValue) then
@@ -1469,12 +1629,13 @@ begin
     btnDoReserve.Enabled := FCanReserve and (not FReserveMode);
   end;
 end;
-
 procedure TBPAssignGameForm.SetBowlerCount(const AValue: ShortInt);
 var
   LOldCount: Integer;
   LIndex: ShortInt;
 begin
+  if (BaseLaneStatus = 5) then
+    Exit;
   if (FBowlerCount <> AValue) then
   begin
     LOldCount := FBowlerCount;
@@ -1495,7 +1656,7 @@ begin
           FeeDiv := BaseFeeDiv;
           BaseGameCount := BaseGameCount;
           BaseGameMin := BaseGameMin;
-          GameCount := BaseGameCount;
+          //GameCount := BaseGameCount;
           GameMin := BaseGameMin;
           MembershipSeq := 0;
           MembershipUseCount := 0;
@@ -1507,6 +1668,15 @@ begin
           ProdAmt := BaseProdAmt;
           ShoesRent := True;
           ShoesFree := False;
+
+          if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+          begin
+            GameCount := BaseProdGameCnt;
+            ButtonGameCountDec.Enabled := False;
+            ButtonGameCountInc.Enabled := False;
+          end
+          else
+            GameCount := BaseGameCount;
         end;
       end;
     end
@@ -1520,7 +1690,6 @@ begin
     btnDoAssign.Enabled := (FAssignList.Count > 0);
   end;
 end;
-
 procedure TBPAssignGameForm.SetBaseGameCount(const AValue: Integer);
 begin
   if (FBaseGameCount <> AValue) then
@@ -1530,6 +1699,9 @@ begin
     for var I: ShortInt := 0 to Pred(FAssignList.Count) do
       with TAssignControl(FAssignList.Objects[I]) do
       begin
+        if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+          Continue;
+
         if (MembershipSeq > 0) and
            (MembershipRemainCount >= FBaseGameCount) then
         begin
@@ -1540,7 +1712,6 @@ begin
       end;
   end;
 end;
-
 procedure TBPAssignGameForm.SetBaseGameMin(const AValue: Integer);
 begin
   if (FBaseGameMin <> AValue) then
@@ -1560,13 +1731,11 @@ begin
       end;
   end;
 end;
-
 procedure TBPAssignGameForm.SetBaseProdCode(const AValue: string);
 begin
   if (FBaseProdCode <> AValue) then
     FBaseProdCode := AValue;
 end;
-
 procedure TBPAssignGameForm.SetBaseProdName(const AValue: string);
 begin
   if (FBaseProdName <> AValue) then
@@ -1575,7 +1744,6 @@ begin
     edtBaseProdName.Text := AValue;
   end;
 end;
-
 procedure TBPAssignGameForm.SetBaseProdAmt(const AValue: Integer);
 begin
   if (FBaseProdAmt <> AValue) then
@@ -1584,7 +1752,6 @@ begin
     edtBaseProdAmt.Value := AValue;
   end;
 end;
-
 procedure TBPAssignGameForm.SetBaseGameDiv(const AValue: ShortInt);
 begin
   if (FBaseGameDiv <> AValue) then
@@ -1604,7 +1771,6 @@ begin
     end
     else if (FBaseGameDiv = CO_RATEPLAN_GAME) then
       BaseGameMin := 0;
-
     for var I: ShortInt := 0 to Pred(FAssignList.Count) do
       with TAssignControl(FAssignList.Objects[I]) do
       begin
@@ -1618,7 +1784,6 @@ begin
         GameCount := BaseGameCount;
         GameMin := BaseGameMin;
       end;
-
 //    btnBaseGameCountDec.Enabled := (FBaseGameDiv = CO_RATEPLAN_GAME);
 //    btnBaseGameCountInc.Enabled := (FBaseGameDiv = CO_RATEPLAN_GAME);
 //    edtBaseGameCount.Enabled := (FBaseGameDiv = CO_RATEPLAN_GAME);
@@ -1627,25 +1792,26 @@ begin
     edtBaseGameMin.Enabled := (FBaseGameDiv = CO_RATEPLAN_TIME);
   end;
 end;
-
 procedure TBPAssignGameForm.SetGameCountTotal(const AValue: integer);
 begin
   if (FGameCountTotal <> AValue) then
   begin
     FGameCountTotal := AValue;
     edtUseGameCountTotal.Value := FGameCountTotal;
+
+    btnCheckOut.Enabled := False;
   end;
 end;
-
 procedure TBPAssignGameForm.SetGameMinTotal(const AValue: integer);
 begin
   if (FGameMinTotal <> AValue) then
   begin
     FGameMinTotal := AValue;
     edtUseGameMinTotal.Value := FGameMinTotal;
+
+    btnCheckOut.Enabled := False;
   end;
 end;
-
 procedure TBPAssignGameForm.SetTitle(const AValue: string);
 begin
   FTitle := AValue;
@@ -1653,23 +1819,25 @@ begin
     panHeader.Caption := FTitle
   else
     panHeader.Caption := Format('%s ▶ %d 레인', [FTitle, BaseLaneNo]);
-end;
 
+  if Pos('예약', FTitle) > 0 then
+    panHeader.Color := $001A9DF4;
+
+end;
 procedure TBPAssignGameForm.SetChargeAmtTotal(const AValue: Integer);
 begin
   if (FChargeAmtTotal <> AValue) then
   begin
     FChargeAmtTotal := AValue;
     edtChargeAmtTotal.Value := FChargeAmtTotal;
+
+    btnCheckOut.Enabled := False;
   end;
 end;
-
 { TAssignControl }
-
 constructor TAssignControl.Create(AOwner: TComponent; const AItemIndex: ShortInt; const AParent: TWinControl);
 begin
   inherited Create(AOwner);
-
   FItemIndex := AItemIndex;
   FAssignedGame := False;
   FLaneNo := 0;
@@ -1701,7 +1869,6 @@ begin
   FShoesFree := False;
   FChargeAmt := 0;
   FEnableBuy := True;
-
   Align := alTop;
   AlignWithMargins := True;
   AutoSize := False;
@@ -1720,7 +1887,6 @@ begin
   Width := 743;
   Parent := AParent;
   OnClick := OnControlEnter; //OnEnter Event가 작동하지 않으므로 OnClick Event에 적용
-
   AssignedPanel := TPanel.Create(Self);
   with AssignedPanel do
   begin
@@ -1735,7 +1901,6 @@ begin
     Visible := False;
     Width := 5;
   end;
-
   DragReorderImage := TImage.Create(Self);
   with DragReorderImage do
   begin
@@ -1756,7 +1921,6 @@ begin
     OnDragOver := OnAssignDragOver;
     OnDragDrop := OnAssignDragDrop;
   end;
-
   LabelBowlerId := TLabel.Create(Self);
   with LabelBowlerId do
   begin
@@ -1770,7 +1934,6 @@ begin
     Top := 11;
     Width := 38;
   end;
-
   EditBowlerName := TDBEditEh.Create(Self);
   with EditBowlerName do
   begin
@@ -1786,7 +1949,6 @@ begin
     Width := 90;
     OnEnter := OnControlEnter;
   end;
-
   EditMembershipName := TDBEditEh.Create(Self);
   with EditMembershipName do
   begin
@@ -1804,7 +1966,6 @@ begin
     Width := 110;
     OnEnter := OnControlEnter;
   end;
-
   ButtonMemberPopup := TBitBtn.Create(Self);
   with ButtonMemberPopup do
   begin
@@ -1821,7 +1982,6 @@ begin
     Width := 30;
     OnClick := OnButtonMemberPopupClick;
  end;
-
   ButtonMemberClear := TBitBtn.Create(Self);
   with ButtonMemberClear do
   begin
@@ -1838,7 +1998,6 @@ begin
     Width := 30;
     OnClick := OnButtonMemberClearClick;
   end;
-
   EditProdName := TDBEditEh.Create(Self);
   with EditProdName do
   begin
@@ -1856,7 +2015,6 @@ begin
     Width := 110;
     OnEnter := OnControlEnter;
   end;
-
   ButtonProdPopup := TBitBtn.Create(Self);
   with ButtonProdPopup do
   begin
@@ -1873,7 +2031,6 @@ begin
     Width := 30;
     OnClick := OnButtonProdPopupClick;
   end;
-
   ButtonProdClear := TBitBtn.Create(Self);
   with ButtonProdClear do
   begin
@@ -1890,7 +2047,6 @@ begin
     Width := 30;
     OnClick := OnButtonProdClearClick;
   end;
-
   ButtonGameCountDec := TButton.Create(Self);
   with ButtonGameCountDec do
   begin
@@ -1908,7 +2064,6 @@ begin
     Width := 30;
     OnClick := OnGameCountDecClick;
   end;
-
   EditGameCount := TNumberBox.Create(Self);
   with EditGameCount do
   begin
@@ -1925,7 +2080,6 @@ begin
     Width := 40;
     OnEnter := OnControlEnter;
   end;
-
   ButtonGameCountInc := TButton.Create(Self);
   with ButtonGameCountInc do
   begin
@@ -1942,7 +2096,6 @@ begin
     Width := 30;
     OnClick := OnGameCountIncClick;
   end;
-
   LabelGameProgress := TLabel.Create(Self);
   with LabelGameProgress do
   begin
@@ -1956,7 +2109,6 @@ begin
     Top := 11;
     Width := 38;
   end;
-
   EditGameMin := TDBNumberEditEh.Create(Self);
   with EditGameMin do
   begin
@@ -1975,7 +2127,6 @@ begin
     Width := 60;
     OnEnter := OnControlEnter;
   end;
-
   CheckBoxShoesRent := TCheckBox.Create(Self);
   with CheckBoxShoesRent do
   begin
@@ -1989,7 +2140,6 @@ begin
     Width := 48;
     OnClick := OnCheckBoxShoesRentClick;
   end;
-
   CheckBoxShoesFree := TCheckBox.Create(Self);
   with CheckBoxShoesFree do
   begin
@@ -2003,7 +2153,6 @@ begin
     Top := 16;
     Width := 48;
   end;
-
   EditChargeAmt := TDBNumberEditEh.Create(Self);
   with EditChargeAmt do
   begin
@@ -2021,7 +2170,6 @@ begin
     Width := 100;
     OnEnter := OnControlEnter;
   end;
-
   ButtonRemoveBowler := TBitBtn.Create(Self);
   with ButtonRemoveBowler do
   begin
@@ -2039,7 +2187,6 @@ begin
     OnClick := OnButtonRemoveBowlerClick;
   end;
 end;
-
 destructor TAssignControl.Destroy;
 begin
   DragReorderImage.Free;
@@ -2060,17 +2207,14 @@ begin
   CheckBoxShoesFree.Free;
   EditChargeAmt.Free;
   ButtonRemoveBowler.Free;
-
   inherited;
 end;
-
 procedure TAssignControl.OnAssignMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   with TImage(Sender) do
     if (Button = mbLeft) then
       BeginDrag(False);
 end;
-
 procedure TAssignControl.OnAssignDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
 begin
   Accept := (Source is TImage) and
@@ -2078,7 +2222,6 @@ begin
             (TImage(Source).Tag <> TImage(Sender).Tag) and
             (TAssignControl(FAssignList.Objects[TImage(Source).Tag]).AssignedGame = TAssignControl(FAssignList.Objects[TImage(Sender).Tag]).AssignedGame);
 end;
-
 procedure TAssignControl.OnAssignDragDrop(Sender, Source: TObject; X, Y: Integer);
 var
   LSource, LSender, LIndex, I: ShortInt;
@@ -2096,7 +2239,6 @@ begin
     else if (LBowlerId <> LBowlerName) then
       LBowlerName := Format('%s-%s', [LBowlerId, LBowlerName]);
   end;
-
   if (Source <> Sender) and
      ((not AssignedGame) or
       (BPMsgBox(Self.Handle, mtConfirmation, '볼러 순서 변경', ErrorString(LBowlerName) + ' 볼러를 ' +
@@ -2113,7 +2255,6 @@ begin
           BPMsgBox(Self.Handle, mtInformation, '알림', Format('%s 볼러의 순서가 변경되었습니다.', [LBowlerName]), ['확인'], 5);
           SendToMainForm(CPC_GAME_REFRESH_FORCE);
         end;
-
         if (LSource > LSender) then
         begin
           TAssignControl(FAssignList.Objects[LSource]).Top := TAssignControl(FAssignList.Objects[LSender]).Top - 10;
@@ -2150,7 +2291,6 @@ begin
     end;
   end;
 end;
-
 procedure TAssignControl.OnButtonMemberPopupClick(Sender: TObject);
 var
   PM: TPluginMessage;
@@ -2177,7 +2317,6 @@ begin
       BPMsgBox(Self.Handle, mtError, '알림', '회원 목록을 불러올 수 없습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TAssignControl.OnButtonMemberClearClick(Sender: TObject);
 begin
   FAssignIndex := ItemIndex;
@@ -2197,7 +2336,6 @@ begin
     EnableBuy := True;
   end;
 end;
-
 procedure TAssignControl.OnButtonProdPopupClick(Sender: TObject);
 var
   PM: TPluginMessage;
@@ -2230,54 +2368,58 @@ begin
       BPMsgBox(Self.Handle, mtError, '알림', '상품 목록을 불러올 수 없습니다.' + _BR + ErrorString(E.Message), ['확인'], 5);
   end;
 end;
-
 procedure TAssignControl.OnButtonProdClearClick(Sender: TObject);
+var
+  PM: TPluginMessage;
 begin
   FAssignIndex := ItemIndex;
   if not ProdCode.IsEmpty then
   begin
+    {
     ProdCode := '';
     if (MembershipSeq = 0) then
       ShoesFree := False;
+    }
+    PM := TPluginMessage.Create(nil);
+    try
+      PM.Command := CPC_SEL_PROD_GAME_DEFAULT;
+      PM.AddParams(CPP_INDEX, ItemIndex); //레인 배정 화면에서 기본설정 상품과 볼러별 상품을 구분하기 위해 사용
+      PM.PluginMessageToId(Global.Plugin.AssignGamePluginId);
+    finally
+      FreeAndNil(PM);
+    end;
   end;
 end;
-
 procedure TAssignControl.OnGameCountDecClick(Sender: TObject);
 begin
   FAssignIndex := ItemIndex;
-  if (GameCount > 1) then
+  if (GameCount > 1) and (GameCount > FGameProgress) then
     GameCount := (GameCount - 1);
 end;
-
 procedure TAssignControl.OnGameCountIncClick(Sender: TObject);
 begin
   FAssignIndex := ItemIndex;
   if (GameCount < LC_LIMIT_GAME_COUNT) then
     GameCount := (GameCount + 1);
 end;
-
 procedure TAssignControl.OnCheckBoxShoesRentClick(Sender: TObject);
 begin
   FAssignIndex := ItemIndex;
   ShoesRent := TCheckBox(Sender).Checked;
 end;
-
 procedure TAssignControl.OnButtonRemoveBowlerClick(Sender: TObject);
 begin
   PostMessage(Global.Plugin.AssignGamePluginId, LWM_REMOVE_BOWLER, ItemIndex, 0);
 end;
-
 procedure TAssignControl.OnControlEnter(Sender: TObject);
 begin
   FAssignIndex := ItemIndex;
 end;
-
 procedure TAssignControl.SetLaneNo(const AValue: ShortInt);
 begin
   if (FLaneNo <> AValue) then
     FLaneNo := AValue;
 end;
-
 procedure TAssignControl.SetAssignedGame(const AValue: Boolean);
 begin
   if (FAssignedGame <> AValue) then
@@ -2288,25 +2430,21 @@ begin
     ButtonMemberClear.Enabled := not FAssignedGame;
   end;
 end;
-
 procedure TAssignControl.SetBowlerId(const AValue: string);
 begin
   FBowlerId := AValue;
   LabelBowlerId.Caption := FBowlerId;
   EditBowlerName.EmptyDataInfo.Text := FBowlerId;
 end;
-
 function TAssignControl.GetBowlerName: string;
 begin
   Result := EditBowlerName.Text;
 end;
-
 procedure TAssignControl.SetBowlerName(const AValue: string);
 begin
   EditBowlerName.Text := AValue;
   EditBowlerName.Hint := AValue;
 end;
-
 procedure TAssignControl.SetGameCount(const AValue: Integer);
 begin
   if (FGameCount <> AValue) then
@@ -2332,10 +2470,13 @@ begin
     end;
     EditGameCount.Value := FGameCount;
     SendMessage(Global.Plugin.AssignGamePluginId, LWM_TOTAL_COUNT, 0, 0);
-    ChargeAmt := (ProdAmt * FGameCount) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+
+    if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+      ChargeAmt := ProdAmt + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0)
+    else
+      ChargeAmt := (ProdAmt * FGameCount) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetGameMin(const AValue: Integer);
 begin
   if (FGameMin <> AValue) then
@@ -2364,7 +2505,6 @@ begin
     ChargeAmt := (ProdAmt * FGameCount) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetMembershipUseCount(const AValue: Integer);
 begin
   if (FMembershipUseCount <> AValue) then
@@ -2378,7 +2518,6 @@ begin
 //    ChargeAmt := (ProdAmt * (GameCount + FMembershipGameCount)) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetMembershipUseMin(const AValue: Integer);
 begin
   if (FMembershipUseMin <> AValue) then
@@ -2390,7 +2529,6 @@ begin
 //    GameMinSubTotal := ((BuyGameMin * (GameCount - MembershipGameCount)) + FMembershipGameMin);
   end;
 end;
-
 procedure TAssignControl.SetBuyGameCount(const AValue: Integer);
 begin
   if (FBuyGameCount <> AValue) then
@@ -2400,7 +2538,6 @@ begin
 //    ChargeAmt := (ProdAmt * (GameCount - MembershipGameCount)) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetBuyGameMin(const AValue: Integer);
 begin
   if (FBuyGameMin <> AValue) then
@@ -2411,16 +2548,20 @@ begin
 //    ChargeAmt := (ProdAmt * (GameCount - MembershipGameCount)) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetGameProgress(const AValue: Integer);
 begin
   FGameProgress := AValue;
   LabelGameProgress.Caption := FGameProgress.ToString;
-  EditGameCount.MinValue := FGameProgress; //이미 진행된 게임 수보다 적을 수는 없음
-  if (GameCount < FGameProgress) then
-    GameCount := FGameProgress;
+  //EditGameCount.MaxValue := LC_LIMIT_GAME_COUNT;
+  //EditGameCount.MinValue := FGameProgress; //이미 진행된 게임 수보다 적을 수는 없음
+  //if (GameCount < FGameProgress) then
+    //GameCount := FGameProgress;
 end;
-
+procedure TAssignControl.SetGameToCnt(const AValue: Integer);
+begin
+  if (FGameToCnt <> AValue) then
+    FGameToCnt := AValue;
+end;
 procedure TAssignControl.SetGameDiv(const AValue: ShortInt);
 begin
   if (FGameDiv <> AValue) then
@@ -2434,7 +2575,6 @@ begin
 //    EditGameCountSubTotal.Enabled := (FGameDiv = CO_RATEPLAN_GAME);
   end;
 end;
-
 procedure TAssignControl.SetProdCode(const AValue: string);
 begin
   if (FProdCode <> AValue) then
@@ -2450,7 +2590,6 @@ begin
     end;
   end;
 end;
-
 procedure TAssignControl.SetProdName(const AValue: string);
 begin
   if (FProdName <> AValue) then
@@ -2460,27 +2599,32 @@ begin
     EditProdName.Hint := FProdName;
   end;
 end;
-
 procedure TAssignControl.SetShoesRent(const AValue: Boolean);
 begin
   if (FShoesRent <> AValue) then
   begin
     FShoesRent := AValue;
     CheckBoxShoesRent.Checked := FShoesRent;
-    ChargeAmt := (ProdAmt * GameCount) + IfThen(FShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+
+    if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+      ChargeAmt := ProdAmt + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0)
+    else
+      ChargeAmt := (ProdAmt * GameCount) + IfThen(FShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetShoesFree(const AValue: Boolean);
 begin
   if (FShoesFree <> AValue) then
   begin
     FShoesFree := AValue;
     CheckBoxShoesFree.Checked := FShoesFree;
-    ChargeAmt := (ProdAmt * GameCount) + IfThen(ShoesRent and not FShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+
+    if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+      ChargeAmt := ProdAmt + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0)
+    else
+      ChargeAmt := (ProdAmt * GameCount) + IfThen(ShoesRent and not FShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetMembershipName(const AValue: string);
 var
   LValue: string;
@@ -2492,20 +2636,21 @@ begin
     LValue := Format('%d분 사용) %s', [MembershipUseMin, FMembershipName])
   else
     LValue := FMembershipName;
-
   EditMembershipName.Text := LValue;
   EditMembershipName.Hint := LValue;
 end;
-
 procedure TAssignControl.SetProdAmt(const AValue: Integer);
 begin
   if (FProdAmt <> AValue) then
   begin
     FProdAmt := AValue;
-    ChargeAmt := (FProdAmt * GameCount) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
+
+    if (GameDiv = CO_RATEPLAN_GAME) and (FeeDiv = CO_GAMEFEE_BASIC) and (ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+      ChargeAmt := FProdAmt + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0)
+    else
+      ChargeAmt := (FProdAmt * GameCount) + IfThen(ShoesRent and not ShoesFree, Global.StoreInfo.ShoesRentProdAmt, 0);
   end;
 end;
-
 procedure TAssignControl.SetChargeAmt(const AValue: Integer);
 begin
   if (FChargeAmt <> AValue) then
@@ -2515,7 +2660,6 @@ begin
     SendMessage(Global.Plugin.AssignGamePluginId, LWM_TOTAL_AMT, 0, 0);
   end;
 end;
-
 procedure TAssignControl.SetEnableBuy(const AValue: Boolean);
 begin
   if (FEnableBuy <> AValue) then
@@ -2528,22 +2672,17 @@ begin
       ProdCode := '';
   end;
 end;
-
 procedure TAssignControl.SetItemIndex(const AValue: ShortInt);
 begin
   FItemIndex := AValue;
   DragReorderImage.Tag := FItemIndex;
 end;
-
 { TLaneNoPanel }
-
 constructor TLaneNoPanel.Create(AOwner: TComponent; const AIndex: ShortInt; AParent: TWinControl);
 begin
   inherited Create(AOwner);
-
   FLaneNo := 0;
   FLaneStatus := CO_LANE_READY;
-
   Self.Caption := Global.LaneInfo.Lanes[AIndex].LaneNo.ToString;
   Self.Cursor := crHandPoint;
   Self.Tag := AIndex;
@@ -2565,7 +2704,6 @@ begin
   Self.Parent := AParent;
   Self.ShowHint := True;
   Self.Hint := '대기';
-
   StatusPanel := TPanel.Create(AOwner);
   with StatusPanel do
   begin
@@ -2580,14 +2718,11 @@ begin
     Visible := False;
   end;
 end;
-
 destructor TLaneNoPanel.Destroy;
 begin
   StatusPanel.Free;
-
   inherited;
 end;
-
 procedure TLaneNoPanel.SetLaneStatus(const AValue: Shortint);
 begin
   if (FLaneStatus <> AValue) then
@@ -2599,14 +2734,11 @@ begin
     StatusPanel.Visible := (FLaneStatus <> CO_LANE_READY);
   end;
 end;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 function OpenPlugin(AMsg: TPluginMessage=nil): TPluginModule;
 begin
   Result := TBPAssignGameForm.Create(Application, AMsg);
 end;
-
 exports
   OpenPlugin;
 end.

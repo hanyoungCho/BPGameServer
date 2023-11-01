@@ -1,7 +1,5 @@
 unit Common.BPDM;
-
 interface
-
 uses
   { Native }
   System.SysUtils, System.Classes, System.ImageList, Vcl.ImgList, Vcl.Controls, Data.DB,
@@ -18,9 +16,7 @@ uses
   uVanDaemonModule, uPaycoNewModule,
   { Project }
   Common.BPGlobal;
-
 {$I Common.BPCommon.inc}
-
 type
   TBPDM = class(TDataModule)
     AntiFreeze: TIdAntiFreeze;
@@ -76,10 +72,8 @@ type
     QRRallyList: TABSQuery;
     QRRallyEntryList: TABSQuery;
     QRReserveList: TABSQuery;
-
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
-
     procedure MariaDBBeforeConnect(Sender: TObject);
     procedure MariaDBAfterConnect(Sender: TObject);
     procedure MariaDBAfterDisconnect(Sender: TObject);
@@ -118,36 +112,29 @@ type
     function GetABSRecordCount(const ASQL: string; var AResMsg: string; const AInMemory: Boolean=False): Integer;
     function MakeNewReceipt(const AAssignLaneNo: ShortInt; var AReceiptNo, AResMsg: string): Boolean;
     function GetNewReceiptNo: string;
-
     function GetICReaderVerify(var AResMsg: string): Boolean;
     function GetCardBinDiscount(const ACardBinNo, AProdDiv: string; const AApproveAmt: Integer; var APromoSeq, ADiscountAmt: Integer; var AResMsg: string): Boolean;
     function CheckCheque(const CR: TChequeRec; var AResMsg: string): Boolean;
-
     function UpdateReceipt(const AReceiptNo: string; var AResMsg: string): Boolean;
     function UpdateSaleItem(var AReceiptNo: string; const APR: TProdItemRec; var AResMsg: string): Boolean;
     function UpdatePayment(const AAssignLaneNo: ShortInt; const AIsSaleMode, ADeleteExists: Boolean; const APR: TPaymentItemRec; var AResMsg: string): Boolean;
     function UpdateCancelPaymentList(APR: TPaymentItemRec; const ANewApproveNo: string; var AResMsg: string): Boolean;
     function DoPaymentPAYCO(const AIsApproval, AIsSaleMode: Boolean; var AResMsg: string): Boolean;
-
     function CleanReceipt(var AResMsg: string): Boolean;
     function RefreshReceipt(var AResMsg: string): Boolean;
     function RefreshSaleItem(const AReceiptNo: string; var AResMsg: string): Boolean;
     function RefreshPayment(const AReceiptNo: string; var AResMsg: string): Boolean;
-
     function RefreshMemberList(var AResMsg: string): Boolean; overload;
     function RefreshMemberList(const AFieldName, ASearchValue: string; var AResMsg: string): Boolean; overload;
     function RefreshMemberList(const AFieldName, ASearchValue, AFieldName2, ASearchValue2: string; var AResMsg: string): Boolean; overload;
     function FindMemberInfo(const AMemberNo: string=''): Boolean;
-
     function GetWeatherInfo: Boolean; overload;
     function GetWeatherInfo(var AResMsg: string): Boolean; overload;
     function RefreshLaneStatus(var AResMsg: string): Boolean;
     function RefreshAssignList(var AResMsg: string): Boolean;
-
     function RequestToGameServer(const AApiName, AReqJson: string; var ARespJson, AResMsg: string): Boolean;
     function LaneControlCommand(const AApiName: string; const ALaneNo: ShortInt; const AItemName, AValue: string; var AResMsg: string): Boolean;
     function BowlerControlCommand(const AApiName, AAssignNo, ABowlerId, AItemName, AValue: string; var AResMsg: string): Boolean;
-
     function InitLane(const ALaneNo: ShortInt; var AResMsg: string): Boolean;
     function SetPinSetter(const ALaneNo: ShortInt; const ASetting: Boolean; var AResMsg: string): Boolean;
     function SetGameMonitor(const ALaneNo: ShortInt; const ASetting: Boolean; var AResMsg: string): Boolean;
@@ -157,20 +144,18 @@ type
     function SetMaintenanceLane(const ALaneNo: ShortInt; const ALockMode: Boolean; var AResMsg: string): Boolean;
     function SetPinSettingType(const ALaneNo, ASettingType: ShortInt; var AResMsg: string): Boolean;
     function CancelGame(const ALaneNo: ShortInt; const AAssignNo: string; var AResMsg: string): Boolean;
+    function CheckOut(const ALaneNo: ShortInt; const AAssignNo: string; const AReceiptNo: string; const ABR: TArray<TBowlerRec>; var AResMsg: string): Boolean;
     function RestoreGame(const ALaneNo: ShortInt; var AResMsg: string): Boolean;
-
     function SetBowlerPause(const AAssignNo, ABowlerId: string; const AValue: Boolean; var AResMsg: string): Boolean;
     function SetGameScore(const AAssignNo, ABowlerid: string; const AGameScore: string; var AResMsg: string): Boolean;
     function SetPaymentType(const AAssignNo, ABowlerId: string; const APaymentType: Integer; var AResMsg: string): Boolean;
     function SetBowlerThrowOrder(const AAssignNo, ABowlerId: string; const AOrderSeq: Integer; var AResMsg: string): Boolean;
     function RemoveBowler(const AAssignNo, ABowlerId: string; var AResMsg: string): Boolean;
-
     function AssignGame(const ARallyMode: Boolean; const AReceiptNo: string; const AAR: TArray<TGameAssignRec>; var AResMsg: string): Boolean;
     function AddBowler(const ALaneNo: ShortInt; const AAssignNo: string; const ABowlerRec: TBowlerRec; var AResMsg: string): Boolean;
     function ChangeBowler(const ALaneNo: ShortInt; const AAssignNo: string; const ANewBowlerRec: TBowlerRec; var AResMsg: string): Boolean;
     function RelocateLane(const ALaneNo, ATargetLaneNo: ShortInt; var AResMsg: string): Boolean;
-    function RelocateBowler(const AAssignNo, ABowlerId: string; const ATargetLaneNo: ShortInt; var AResMsg: string): Boolean;
-
+    function RelocateBowler(const AAssignNo, ABowlerId: string; const ATargetLaneNo: ShortInt; var AResMsg, ATargetAssignNo, ATargetBowlerId: string): Boolean;
     function RequestToPartnerCenter(const AProcName, AUrl, AMethod, AReqJson: string; var ARespJson, AResMsg: string): Boolean;
     function GetToken(const AHostUrl, ATerminalId, ASecretKey: string; var AToken, AResMsg: string): Boolean;
     function CheckLogin(const AUserId, ATerminalPwd: string; const ASaveId: Boolean; var AResMsg: string): Boolean;
@@ -185,7 +170,7 @@ type
     function GetMembership(const AMemberNo: string; var AResMsg: string): Boolean; overload;
     function GetMembership(const AMemberNo, AQrCode, AMobileNo: string; var AResMsg: string): Boolean; overload;
     function GetProdGameList(var AResMsg: string): Boolean; overload;
-    function GetProdGameList(const AProdCode, AFeeDiv, ABaseDateTime: string; const ATodaySaleOnly: Boolean; var AResMsg: string): Boolean; overload;
+    function GetProdGameList(const AProdCode, AFeeDiv, ABaseDateTime: string; var AResMsg: string): Boolean; overload;
     function GetProdMembershipList(var AResMsg: string): Boolean; overload;
     function GetProdLockerList(var AResMsg: string): Boolean;
     function GetProdRentList(var AResMsg: string): Boolean;
@@ -195,35 +180,26 @@ type
     function GetSaleDetailList(const AReceiptNo: string; var AResMsg: string): Boolean;
     function GetRallyList(const AStartDate, AEndDate, ARallyTitle: string; const AClubSeq: Integer; var AResMsg: string): Boolean;
     function GetRallyEntryList(const ARallySeq: Integer; var AResMsg: string): Boolean;
-
     function PostProdSale(ARI: TReceiptItemInfo; ASL: TArray<TProdItemRec>; APL: TArray<TPaymentItemRec>; var AResMsg: string): Boolean;
     function PostMember(const ANewMember: Boolean; const AMemberRec: TMemberInfoRec; var AResMsg: string): Boolean;
     function PostLockerClose(const ALockerNo: SmallInt; var AResMsg: string): Boolean;
     function PostSystemSetting(var AResMsg: string): Boolean;
-
     function PostCancelPayment(APL: TArray<TPaymentItemRec>; const AReceiptNo, AOrgReceiptNo: string; var AResMsg: string): Boolean;
     function PostCancelPaymentPartial(APR: TPaymentItemRec; const ANewApproveNo: string; var AResMsg: string): Boolean;
     function PostUpdateCashPayment(APR: TPaymentItemRec; var AResMsg: string): Boolean;
     function PostRallySetting(const RR: TRallyInfoRec; var AResMsg: string): Boolean;
-
     function OpenProdDataSet(const AGameDiv: ShortInt; const AProdDiv, ADetailDiv, AFeeDiv: string; const AMembershipOnly, ATodaySaleOnly: Boolean; var AResMsg: string): Boolean;
-
     function AddPending(const AAssignLaneList: string; var AResMsg: string): Boolean;
     function DeletePending(const AReceiptNo: string; var AResMsg: string): Boolean;
     function LoadPending(const AReceiptNo: string; var AResMsg: string): Boolean;
-
     function MakeReceiptJson(ARI: TReceiptItemInfo; ASL: TArray<TProdItemRec>; APL: TArray<TPaymentItemRec>; const ASaleDate, ASaleTime: string; var AResMsg: string): string;
     function MakeCancelReceiptJson(ARI: TReceiptItemInfo; APL: TArray<TPaymentItemRec>; var AResMsg: string): string;
   end;
-
 var
   BPDM: TBPDM;
   SSL: TIdSSLIOHandlerSocketOpenSSL;
-
 function ActivateCkDLL(var AResMsg: string): Boolean;
-
 implementation
-
 uses
   { Native }
   System.DateUtils, System.Variants, System.StrUtils, System.Math,
@@ -235,9 +211,7 @@ uses
   ABSTypes, ABSConverts,
   { Project }
   Common.BPCommonLib;
-
 {%CLASSGROUP 'Vcl.Controls.TControl'}
-
 procedure AddAllFields(ADataSet: TDataSet);
 var
   LFieldsList: TStringList;
@@ -281,7 +255,6 @@ begin
       ADataSet.Active := True;
   end;
 end;
-
 procedure CreateField(ADataSet: TDataSet; const AFieldName: string; const AFieldKind: TFieldKind; const AFieldType: TFieldType; const AFieldSize: Integer);
 begin
   case AFieldType of
@@ -332,7 +305,6 @@ begin
       end;
   end;
 end;
-
 function ActivateCkDLL(var AResMsg: string): Boolean;
 var
   CkGlobal: HCkGlobal;
@@ -360,21 +332,17 @@ begin
     end;
   end;
 end;
-
 {$R *.dfm}
-
 procedure TBPDM.DataModuleCreate(Sender: TObject);
 begin
   SSL := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
   SSL.SSLOptions.Method := sslvSSLv23;
   SSL.SSLOptions.Mode := sslmClient;
 end;
-
 procedure TBPDM.DataModuleDestroy(Sender: TObject);
 begin
   FreeAndNil(SSL);
 end;
-
 procedure TBPDM.MariaDBBeforeConnect(Sender: TObject);
 begin
   with TUniConnection(Sender) do
@@ -392,38 +360,31 @@ begin
     Password := Global.GameServer.DBPassword;
   end;
 end;
-
 procedure TBPDM.MariaDBAfterConnect(Sender: TObject);
 begin
   SendToMainForm(CPC_MAIN_STATUS, CMP_GAME_SERVER_ON);
 end;
-
 procedure TBPDM.MariaDBAfterDisconnect(Sender: TObject);
 begin
   SendToMainForm(CPC_MAIN_STATUS, CMP_GAME_SERVER_OFF);
 end;
-
 procedure TBPDM.MariaDBConnectionLost(Sender: TObject; Component: TComponent; ConnLostCause: TConnLostCause; var RetryMode: TRetryMode);
 begin
   RetryMode := rmReconnectExecute;
 end;
-
 procedure TBPDM.MariaDBError(Sender: TObject; E: EDAError; var Fail: Boolean);
 begin
   SendToMainForm(CPC_MAIN_STATUS, CMP_GAME_SERVER_OFF);
 end;
-
 procedure TBPDM.SPGameStatusBeforeOpen(DataSet: TDataSet);
 begin
   SPGameStatus.Params.ParamValues['p_store_cd'] := Global.StoreInfo.StoreCode;
 end;
-
 procedure TBPDM.SPAssignListBeforeOpen(DataSet: TDataSet);
 begin
   SPAssignList.Params.ParamValues['p_store_cd'] := Global.StoreInfo.StoreCode;
 //  SPAssignList.Params.ParamValues['p_assign_dt'] := Global.DateTime.CurrentDate;
 end;
-
 function TBPDM.OpenABSDatabase(const ADBFile: string; var AResMsg: string): Boolean;
 begin
   Result := False;
@@ -449,7 +410,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.RefreshABSDataSet(const ADataSet: TDataSet; var AResMsg: string): Boolean;
 begin
   Result := False;
@@ -471,7 +431,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.ExecuteABSQuery(const ASQL: string; var AResMsg: string; const AInMemory: Boolean): Boolean;
 begin
   Result := False;
@@ -501,7 +460,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.DeleteABSRecord(const ATableName, AWhereSQL: string; const AUseBackup: Boolean; var AResMsg: string): Boolean;
 begin
   Result := False;
@@ -534,7 +492,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.CreateABSMemTable(var AResMsg: string): Boolean;
 var
   LTable: TABSTable;
@@ -580,6 +537,7 @@ begin
       SQL.Add(', game_min SMALLINT DEFAULT 0'); //배정한 게임 수
       SQL.Add(', game_fin SHORTINT DEFAULT 0'); //완료한 게임 수
       SQL.Add(', direction SHORTINT DEFAULT 0'); //레인 사용 상태 (0:대기, 1: 왼쪽투구, 2:오른쪽 투구)
+      SQL.Add(', to_cnt SHORTINT DEFAULT 0'); //현재 게임 투구수
       SQL.Add(', frame_no SHORTINT DEFAULT 0'); //현재 게임 중인 프레임 번호
       SQL.Add(', pin_fall_result VARCHAR(21)'); //전체 프레임별 점수 (112233445566778899000) Ex.: 9/9000000000000000000
       SQL.Add(', total_score SMALLINT DEFAULT 0');
@@ -606,7 +564,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTableName := 'MTAssignList';
       SQL.Clear;
@@ -643,6 +600,7 @@ begin
       SQL.Add(', game_cnt SHORTINT DEFAULT 0');
       SQL.Add(', game_min INTEGER DEFAULT 0');
       SQL.Add(', game_fin SHORTINT DEFAULT 0');
+      SQL.Add(', to_cnt SHORTINT DEFAULT 0');
       SQL.Add(', frame_no SHORTINT DEFAULT 0');
       SQL.Add(', direction SHORTINT DEFAULT 0');
       SQL.Add(', prod_cd VARCHAR(10)');
@@ -654,7 +612,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTableName := 'MTRallyList';
       SQL.Clear;
@@ -678,7 +635,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTableName := 'MTRallyEntryList';
       SQL.Clear;
@@ -700,7 +656,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTable.TableName := 'TBReceipt';
       LTable.Open;
@@ -722,7 +677,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTable.TableName := 'TBSaleItem';
       LTable.Open;
@@ -744,7 +698,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTable.Close;
       LTable.TableName := 'TBPayment';
       LTable.Open;
@@ -766,7 +719,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTCodeList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -778,7 +730,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTLaneList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -789,7 +740,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTLockerList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -814,7 +764,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTClubList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -827,7 +776,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTMemberList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -854,7 +802,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTMembership';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -879,7 +826,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTMemberLocker';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -895,7 +841,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTProdGame';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -925,7 +870,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTProdLocker';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -943,7 +887,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTProdRent';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -959,7 +902,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTProdGeneral';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -975,7 +917,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTPluList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -991,7 +932,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTCreditCardList';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -1019,7 +959,6 @@ begin
       SQL.Add(Format('INSERT INTO %s (code, issuer, acquirer) VALUES (%s, %s, %s);', [LTableName, QuotedStr('0801'), QuotedStr('해외다이너스'), QuotedStr('현대카드')]));
       SQL.Add(Format('INSERT INTO %s (code, issuer, acquirer) VALUES (%s, %s, %s);', [LTableName, QuotedStr('0901'), QuotedStr('해외아멕스'), QuotedStr('해외아멕스')]));
       ExecSQL;
-
       LTableName := 'MTWeatherToday';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -1036,7 +975,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       LTableName := 'MTWeatherWeek';
       SQL.Clear;
       SQL.Add(Format('DROP TABLE %s;', [LTableName]));
@@ -1053,7 +991,6 @@ begin
       SQL.Add(Format(', PRIMARY KEY %s_PK (seq)', [LTableName]));
       SQL.Add(');');
       ExecSQL;
-
       Result := True;
     except
       on E: Exception do
@@ -1069,7 +1006,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.EmptyABSTable(const ATableName: string; const AInMemory: Boolean): Boolean;
 var
   LResMsg: string;
@@ -1084,7 +1020,6 @@ begin
       UpdateLog(Format('EmptyABSTable.Exception = %s', [E.Message]));
   end;
 end;
-
 function TBPDM.GetABSDataSet(const ASQL: string): TDataSet;
 begin
   Result := TABSQuery.Create(nil);
@@ -1095,7 +1030,6 @@ begin
     Open;
   end;
 end;
-
 function TBPDM.GetABSMaxSeq(const ATableName: string): Integer;
 begin
   with TABSQuery.Create(nil) do
@@ -1113,7 +1047,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.GetABSRecordCount(const ASQL: string; var AResMsg: string; const AInMemory: Boolean): Integer;
 begin
   Result := 0;
@@ -1146,7 +1079,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.MakeNewReceipt(const AAssignLaneNo: ShortInt; var AReceiptNo, AResMsg: string): Boolean;
 var
   LSQL: string;
@@ -1175,7 +1107,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.GetNewReceiptNo: string;
 begin
   Result := Global.StoreInfo.StoreCode +
@@ -1183,7 +1114,6 @@ begin
     Copy(Global.DateTime.CurrentDate, 3, 6) + //yymmdd
     Global.DateTime.CurrentTime; // hhmiss
 end;
-
 function TBPDM.GetICReaderVerify(var AResMsg: string): Boolean;
 var
   LResMsg: AnsiString;
@@ -1202,7 +1132,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.GetCardBinDiscount(const ACardBinNo, AProdDiv: string; const AApproveAmt: Integer; var APromoSeq, ADiscountAmt: Integer; var AResMsg: string): Boolean;
 const
   CS_API = 'K608_PromotionCardBin'; //확인 필요
@@ -1224,17 +1153,14 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       bUsePos := (CkJsonObject__stringOf(JO, 'result_data.pos_use_yn') = CO_RESULT_YES);
       bUseKiosk := (CkJsonObject__stringOf(JO, 'result_data.kiosk_use_yn') = CO_RESULT_YES);
       if (not bUsePos) then
         raise Exception.Create('프런트에서 즉시할인 적용이 불가한 카드입니다.' + IfThen(bUseKiosk, _CRLF + '(키오스크에서만 할인 적용 가능)', ''));
-
       APromoSeq := StrToIntDef(CkJsonObject__stringOf(JO, 'pc_seq'), 0);
       ADiscountAmt := StrToIntDef(CkJsonObject__stringOf(JO, 'dc_amt'), 0);
       if (APromoSeq = 0) then
@@ -1251,7 +1177,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.CheckCheque(const CR: TChequeRec; var AResMsg: string): Boolean;
 var
   SI: TCardSendInfoDM;
@@ -1274,7 +1199,6 @@ begin
       AResMsg := E.Message;
   end;
 end;
-
 function TBPDM.UpdateReceipt(const AReceiptNo: string; var AResMsg: string): Boolean;
 var
   LSaleAmt, LDCAmt, LUsePoint, LKeepAmt, LChargeAmt, LReceiveAmt, LChangeAmt: Integer;
@@ -1287,7 +1211,6 @@ begin
   LKeepAmt := 0;
   LReceiveAmt := 0;
   LChangeAmt := 0;
-
   with TABSQuery.Create(nil) do
   try
     DatabaseName := LocalDB.DatabaseName;
@@ -1311,7 +1234,6 @@ begin
         LChangeAmt := IfThen(LReceiveAmt = 0, 0, (LReceiveAmt - LChargeAmt));
         LKeepAmt := FieldByName('keep_amt').AsInteger;
       end;
-
       Close;
       SQL.Clear;
       SQL.Add('SELECT');
@@ -1323,7 +1245,6 @@ begin
       Open;
       if (RecordCount > 0) then
         LReceiveAmt := FieldByName('receive_amt').AsInteger;
-
       Close;
       SQL.Clear;
       SQL.Add('UPDATE TBReceipt');
@@ -1337,7 +1258,6 @@ begin
       SQL.Add(Format('  , keep_amt = %d', [LKeepAmt]));
       SQL.Add(Format('WHERE receipt_no = %s;', [AReceiptNo.QuotedString]));
       ExecSQL;
-
       if not RefreshReceipt(AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -1353,7 +1273,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.UpdateSaleItem(var AReceiptNo: string; const APR: TProdItemRec; var AResMsg: string): Boolean;
 var
   LFields: TArray<TFieldInfoRec>;
@@ -1388,7 +1307,6 @@ begin
       LPurchaseMonth := PurchaseMonth;
       LStartDate := FormattedDateString(UseStartDate);
     end;
-
     with QRSaleItem do
     try
       if AReceiptNo.IsEmpty or
@@ -1398,7 +1316,6 @@ begin
       if not Active then
         if not RefreshSaleItem(AReceiptNo, AResMsg) then
           raise Exception.Create(AResMsg);
-
       DisableControls;
       //볼러별 게임 상품과 대여 상품은 볼러별 개별 저장
       if (LProdDiv = CO_PROD_GAME) or
@@ -1467,7 +1384,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.UpdatePayment(const AAssignLaneNo: ShortInt; const AIsSaleMode, ADeleteExists: Boolean; const APR: TPaymentItemRec; var AResMsg: string): Boolean;
 var
   LTableName, LSQL, LReceiptNo: string;
@@ -1486,7 +1402,6 @@ begin
       LReceiptNo := QRReceiptList.FieldByName('receipt_no').AsString;
       LTableName := 'MTPaymentList';
     end;
-
     SetLength(LFields, 0);
     AddFieldInfo(LFields, 'receipt_no', varString, LReceiptNo);
     AddFieldInfo(LFields, 'assign_lane_no', varInteger, AAssignLaneNo);
@@ -1530,7 +1445,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.UpdateCancelPaymentList(APR: TPaymentItemRec; const ANewApproveNo: string; var AResMsg: string): Boolean;
 var
   LSQL: string;
@@ -1552,7 +1466,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.DoPaymentPAYCO(const AIsApproval, AIsSaleMode: Boolean; var AResMsg: string): Boolean;
 var
   SDS, PDS: TDataSet;
@@ -1575,7 +1488,6 @@ begin
     SDS := QRSaleItemList;
     PDS := QRPaymentList;
   end;
-
   Global.ReceiptInfo.PaycoReady := True;
   try
     try
@@ -1591,7 +1503,6 @@ begin
         SI.OrgAgreeDate := PDS.FieldByName('trade_date').AsString;
         SI.TerminalID := PDS.FieldByName('tid').AsString;
       end;
-
       LVat := (LPaycoAmt - Trunc(LPaycoAmt / 1.1));
       SI.BizNo := Global.StoreInfo.BizNo;
       SI.SerialNo := Global.TerminalInfo.VanTID;
@@ -1606,7 +1517,6 @@ begin
       SI.CouponAmt := 0;
       SI.ServiceType := '';
       SI.ApprovalAmount := (SI.PayAmt - SI.PointAmt - SI.CouponAmt);
-
       LGoodsName := '';
       LGoodsList := '';
       LIndex := 0;
@@ -1623,7 +1533,6 @@ begin
           LGoodsList := LGoodsList + '001' + _SOH + '상품' + IntToStr(Succ(LIndex)) + _SOH +
             IntToStr(FieldByName('calc_charge_amt').AsInteger) + _SOH + IntToStr(FieldByName('order_qty').AsInteger);
           LGoodsList := LGoodsList + _SOH + CO_RESULT_YES;
-
           Inc(LIndex);
           Next;
         end;
@@ -1632,11 +1541,9 @@ begin
       end;
       PaycoModule.GoodsName := LGoodsName;
       PaycoModule.GoodsList := LGoodsList;
-
       RI := PaycoModule.ExecPayProc(SI);
       if not RI.Result then
         raise Exception.Create(RI.Msg);
-
       if AIsSaleMode then
       begin
         if AIsApproval then
@@ -1646,7 +1553,6 @@ begin
         end
         else
           Global.ReceiptInfo.CardPayAmt := (Global.ReceiptInfo.CardPayAmt - LPaycoAmt);
-
         PR.Clear;
         PR.IsApproval := AIsApproval;
         PR.IsManualInput := False;
@@ -1680,7 +1586,6 @@ begin
     Global.ReceiptInfo.PaycoReady := False;
   end;
 end;
-
 function TBPDM.CleanReceipt(var AResMsg: string): Boolean;
 var
   LReceiptNo: string;
@@ -1721,7 +1626,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.RefreshReceipt(var AResMsg: string): Boolean;
 var
   BM: TBookmark;
@@ -1768,7 +1672,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.RefreshSaleItem(const AReceiptNo: string; var AResMsg: string): Boolean;
 var
   BM: TBookmark;
@@ -1824,7 +1727,6 @@ begin
 {$ENDIF}
   end;
 end;
-
 function TBPDM.RefreshPayment(const AReceiptNo: string; var AResMsg: string): Boolean;
 var
   BM: TBookmark;
@@ -1874,7 +1776,6 @@ begin
 {$ENDIF}
   end;
 end;
-
 function TBPDM.RefreshMemberList(var AResMsg: string): Boolean;
 begin
   Result := RefreshMemberList('', '', '', '', AResMsg);
@@ -1949,7 +1850,6 @@ begin
     EnableControls;
   end;
 end;
-
 function TBPDM.FindMemberInfo(const AMemberNo: string): Boolean;
 begin
   Result := False;
@@ -1957,7 +1857,6 @@ begin
   if (not AMemberNo.IsEmpty) and
      (not QRMemberList.Locate('member_no', AMemberNo, [])) then
     Exit;
-
   with Global.MemberInfo, QRMemberList do
   begin
     MemberNo := AMemberNo;
@@ -1986,7 +1885,6 @@ begin
   end;
   Result := True;
 end;
-
 function TBPDM.GetWeatherInfo: Boolean;
 var
   LResMsg: string;
@@ -2101,7 +1999,6 @@ begin
   try
     if not Global.WeatherInfo.Enabled then
       raise Exception.Create('날씨 정보를 사용하기 위한 설정이 올바르지 않습니다.');
-
     try
       HC.Request.CustomHeaders.Clear;
       HC.IOHandler := SSL;
@@ -2130,7 +2027,6 @@ begin
       LResMsg := CkJsonObject__stringOf(JO, 'message');
       if (not LResCode.IsEmpty) then
         raise Exception.Create(Format('ResultCode: %s, Message: %s', [LResCode, LResMsg]));
-
       Global.WeatherInfo.WeatherId := -1; //현재(초기화)
       Global.WeatherInfo.Temper := '';
       Global.WeatherInfo.Humidity := '';
@@ -2143,7 +2039,6 @@ begin
       Global.WeatherInfo.Humidity := RO.GetValue('humidity').Value; //(현재)습도
       Global.WeatherInfo.WindSpeed := IntToStr(Round(StrToFloatDef(RO.GetValue('wind_speed').Value, 0))); //(현재)풍속
       Global.WeatherInfo.Precipit := ''; //(현재)강수확률
-
       JV := RO.Get('weather').JsonValue;
       LCount := (JV as TJSONArray).Count;
       for var I: ShortInt := 0 to Pred(nCount) do
@@ -2155,7 +2050,6 @@ begin
         Break;
       end;
       *)
-
       //금일예보
       LTableName := 'MTWeatherToday';
       if not EmptyABSTable(LTableName, True) then
@@ -2165,7 +2059,6 @@ begin
         InMemory := True;
         TableName := LTableName;
         Open;
-
         JA := CkJsonObject_ArrayOf(JO, 'hourly');
         LCount := CkJsonArray_getSize(JA);
         for var I: ShortInt := 0 to Pred(LCount) do
@@ -2175,7 +2068,6 @@ begin
           LDateTime := UnixToDateTime(LUnixTime);
           if (LDateTime < Now) then
             Continue;
-
           LTemper := IntToStr(Round(StrToFloatDef(CkJsonObject__stringOf(RO, 'temp'), 0)));
           LHumidity := CkJsonObject__stringOf(RO, 'humidity');
           LWindSpeed := IntToStr(Round(StrToFloatDef(CkJsonObject__stringOf(RO, 'wind_speed'), 0)));
@@ -2200,7 +2092,6 @@ begin
               Global.WeatherInfo.Precipit := LPrecipit; //강수확률
               UpdateLog(Format('GetWeatherInfo.Current = WeatherId: %d, IconIndex: %d, Condition: %s', [LWeatherId, Global.WeatherInfo.IconIndex, LCondition]));
             end;
-
             Append;
             FieldValues['datetime'] := LDateTime;
             FieldValues['weather_id'] := LWeatherId;
@@ -2218,7 +2109,6 @@ begin
         Close;
         Free;
       end;
-
       //주간예보
       LTableName := 'MTWeatherWeek';
       if not EmptyABSTable(LTableName, True) then
@@ -2228,7 +2118,6 @@ begin
         InMemory := True;
         TableName := LTableName;
         Open;
-
         JA := CkJsonObject_ArrayOf(JO, 'daily');
         LCount := CkJsonArray_getSize(JA);
         for var I: ShortInt := 0 to Pred(LCount) do
@@ -2238,7 +2127,6 @@ begin
           LDateTime := UnixToDateTime(LUnixTime);
           if (LDateTime < Now) then
             Continue;
-
           LHumidity := CkJsonObject__stringOf(RO, 'humidity');
           LWindSpeed := IntToStr(Round(StrToFloatDef(CkJsonObject__stringOf(RO, 'wind_speed'), 0)));
           LPrecipit := IntToStr(Round(StrToFloatDef(CkJsonObject__stringOf(RO, 'pop'), 0) * 100));
@@ -2266,7 +2154,6 @@ begin
         First;
         EnableControls;
       end;
-
       Result := True;
       SendToMainForm(CPC_WEATHER);
     except
@@ -2289,7 +2176,6 @@ begin
     FreeAndNil(HC);
   end;
 end;
-
 function TBPDM.RefreshLaneStatus(var AResMsg: string): Boolean;
 var
   LFields: TArray<TFieldInfoRec>;
@@ -2313,7 +2199,6 @@ begin
       LUsedCount := 0;
       LReservedCount := 0;
       LBusyCount := 0;
-
       if not EmptyABSTable(LTableName, True) then
         raise Exception.Create(Format('EmptyABSTable.Exception = %s', [LTableName]));
       with TABSQuery.Create(nil) do
@@ -2354,7 +2239,6 @@ begin
             CO_LANE_BUSY:
               Inc(LBusyCount);
           end;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'lane_no', varInteger, LLaneNo);
           AddFieldInfo(LFields, 'lane_status', varInteger, LLaneStatus);
@@ -2387,6 +2271,7 @@ begin
             AddFieldInfo(LFields, 'game_min', varInteger, SPGameStatus.FieldByName('game_min').AsInteger);
             AddFieldInfo(LFields, 'game_fin', varInteger, SPGameStatus.FieldByName('game_fin').AsInteger);
             AddFieldInfo(LFields, 'direction', varInteger, StrToIntDef(SPGameStatus.FieldByName('game_status').AsString, CO_LANE_DIR_NOT_USED)); //0:대기
+            AddFieldInfo(LFields, 'to_cnt', varInteger, StrToIntDef(SPGameStatus.FieldByName('to_cnt').AsString, 0));
             AddFieldInfo(LFields, 'frame_no', varInteger, LFrameNo);
             AddFieldInfo(LFields, 'pin_fall_result', varString, SPGameStatus.FieldByName('pin_fall_result').AsString);
             AddFieldInfo(LFields, 'total_score', varInteger, SPGameStatus.FieldByName('total_score').AsInteger);
@@ -2407,10 +2292,10 @@ begin
         Close;
         Free;
       end;
-
       Global.LaneInfo.ReadyCount := (Global.LaneInfo.LaneCount - LUsedCount);
       Global.LaneInfo.ReservedCount := LReservedCount;
-      Global.LaneInfo.BusyCount := LBusyCount;
+      //Global.LaneInfo.BusyCount := LBusyCount;
+      Global.LaneInfo.BusyCount := LUsedCount;
       if not RefreshABSDataSet(QRGameList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -2423,7 +2308,6 @@ begin
     Global.GameStatusWorking := False;
   end;
 end;
-
 function TBPDM.RefreshAssignList(var AResMsg: string): Boolean;
 var
   LFields: TArray<TFieldInfoRec>;
@@ -2446,7 +2330,6 @@ begin
       LOldAssignLaneNo := 0;
       LOldAssignNo := '';
       LReceiptNo := '';
-
       if not EmptyABSTable(LTableName, True) then
         raise Exception.Create(Format('EmptyABSTable.Exception = %s', [LTableName]));
       with TABSQuery.Create(nil) do
@@ -2477,7 +2360,6 @@ begin
             if (LAssignStatus = CO_LANE_RESERVED) then
               Inc(LAssignIndex);
           end;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'receipt_no', varString, LReceiptNo);
           AddFieldInfo(LFields, 'assign_seq', varInteger, SPAssignList.FieldByName('assign_seq').AsInteger);
@@ -2510,6 +2392,7 @@ begin
           AddFieldInfo(LFields, 'game_cnt', varInteger, SPAssignList.FieldByName('game_cnt').AsInteger);
           AddFieldInfo(LFields, 'game_min', varInteger, SPAssignList.FieldByName('game_min').AsInteger);
           AddFieldInfo(LFields, 'game_fin', varInteger, SPAssignList.FieldByName('game_fin').AsInteger);
+          AddFieldInfo(LFields, 'to_cnt', varInteger, SPAssignList.FieldByName('to_cnt').AsInteger);
           AddFieldInfo(LFields, 'frame_no', varInteger, SPAssignList.FieldByName('frame_no').AsInteger);
           AddFieldInfo(LFields, 'direction', varInteger, SPAssignList.FieldByName('direction').AsInteger);
           AddFieldInfo(LFields, 'prod_cd', varString, SPAssignList.FieldByName('product_cd').AsString);
@@ -2529,7 +2412,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRAssignList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -2545,9 +2427,7 @@ begin
     Global.AssignListWorking := False;
   end;
 end;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 function TBPDM.RequestToGameServer(const AApiName, AReqJson: string; var ARespJson, AResMsg: string): Boolean;
 var
   TC: TIdTCPClient;
@@ -2585,7 +2465,6 @@ begin
     FreeAndNil(TC);
   end;
 end;
-
 function TBPDM.LaneControlCommand(const AApiName: string; const ALaneNo: ShortInt; const AItemName, AValue: string; var AResMsg: string): Boolean;
 var
   JO: HCkJsonObject;
@@ -2608,7 +2487,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -2625,7 +2503,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.BowlerControlCommand(const AApiName, AAssignNo, ABowlerId, AItemName, AValue: string; var AResMsg: string): Boolean;
 var
   JO: HCkJsonObject;
@@ -2649,7 +2526,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -2666,63 +2542,54 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.InitLane(const ALaneNo: ShortInt; var AResMsg: string): Boolean;
 const
   CS_API = 'Z101_initLane';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, '', '', AResMsg);
 end;
-
 function TBPDM.SetPinSetter(const ALaneNo: ShortInt; const ASetting: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z001_sendPinSetter';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'use_yn', IfThen(ASetting, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetGameMonitor(const ALaneNo: ShortInt; const ASetting: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z002_sendMoniter';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'use_yn', IfThen(ASetting, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetGameNext(const ALaneNo: ShortInt; var AResMsg: string): Boolean;
 const
   CS_API = 'Z105_chgGameNext';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'use_yn', CO_RESULT_YES, AResMsg);
 end;
-
 function TBPDM.SetLeagueMode(const ALaneNo: ShortInt; const ALeagueMode: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z113_chgGameLeague';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'use_yn', IfThen(ALeagueMode, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetHoldLane(const ALaneNo: ShortInt; const AHoldMode: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z201_chgLaneHold';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'hold_yn', IfThen(AHoldMode, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetMaintenanceLane(const ALaneNo: ShortInt; const ALockMode: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z202_chgLaneLock';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'lock_yn', IfThen(ALockMode, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetPinSettingType(const ALaneNo, ASettingType: ShortInt; var AResMsg: string): Boolean;
 const
   CS_API = 'Z003_sendPinSetting';
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, 'setting_type', ASettingType.ToString, AResMsg);
 end;
-
 function TBPDM.CancelGame(const ALaneNo: ShortInt; const AAssignNo: string; var AResMsg: string): Boolean;
 const
   CS_API = 'Z103_delLaneGame';
@@ -2736,42 +2603,36 @@ const
 begin
   Result := LaneControlCommand(CS_API, ALaneNo, '', '', AResMsg);
 end;
-
 function TBPDM.SetBowlerPause(const AAssignNo, ABowlerId: string; const AValue: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'Z004_sendBowlerPause';
 begin
   Result := BowlerControlCommand(CS_API, AAssignNo, ABowlerId, 'pause_yn', IfThen(AValue, CO_RESULT_YES, CO_RESULT_NO), AResMsg);
 end;
-
 function TBPDM.SetGameScore(const AAssignNo, ABowlerid: string; const AGameScore: string; var AResMsg: string): Boolean;
 const
   CS_API = 'Z104_chgScore';
 begin
   Result := BowlerControlCommand(CS_API, AAssignNo, ABowlerId, 'game_score', AGameScore, AResMsg);
 end;
-
 function TBPDM.SetPaymentType(const AAssignNo, ABowlerId: string; const APaymentType: Integer; var AResMsg: string): Boolean;
 const
   CS_API = 'Z117_chgBowlerPay';
 begin
   Result := BowlerControlCommand(CS_API, AAssignNo, ABowlerId, 'payment_type', APaymentType.ToString, AResMsg);
 end;
-
 function TBPDM.SetBowlerThrowOrder(const AAssignNo, ABowlerId: string; const AOrderSeq: Integer; var AResMsg: string): Boolean;
 const
   CS_API = 'Z118_chgBowlerSwitch';
 begin
   Result := BowlerControlCommand(CS_API, AAssignNo, ABowlerId, 'order_seq', AOrderSeq.ToString, AResMsg);
 end;
-
 function TBPDM.RemoveBowler(const AAssignNo, ABowlerId: string; var AResMsg: string): Boolean;
 const
   CS_API = 'Z111_delBowler';
 begin
   Result := BowlerControlCommand(CS_API, AAssignNo, ABowlerId, '', '', AResMsg);
 end;
-
 function TBPDM.AssignGame(const ARallyMode: Boolean; const AReceiptNo: string; const AAR: TArray<TGameAssignRec>; var AResMsg: string): Boolean;
 const
   CS_API = 'Z102_regLaneGame';
@@ -2826,18 +2687,15 @@ begin
     end;
     LReqJson := CkJsonObject__emit(JO);
     LRespJson := '';
-
     try
       if not RequestToGameServer(CS_API, LReqJson, LRespJson, AResMsg) then
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('게임서버 Error #%s, %s', [LResCode, AResMsg]));
-
       //대회 모드가 아닌 경우에만 매출 내역 갱신
       if not ARallyMode then
       begin
@@ -2864,7 +2722,12 @@ begin
                   PI.ProdCode := AAR[I].Bowlers[J].ProdInfo.ProdCode;
                   PI.ProdName := AAR[I].Bowlers[J].ProdInfo.ProdName;
                   PI.ProdAmt := AAR[I].Bowlers[J].ProdInfo.ProdAmt;
-                  PI.OrderQty := AAR[I].Bowlers[J].ProdInfo.OrderQty;
+
+                  if (AAR[I].GameDiv = CO_RATEPLAN_GAME) and (AAR[I].Bowlers[J].FeeDiv = CO_GAMEFEE_BASIC) and (PI.ProdCode <> Global.StoreInfo.DefaultGameProdCode) then
+                    PI.OrderQty := 1
+                  else
+                    PI.OrderQty := AAR[I].Bowlers[J].ProdInfo.OrderQty;
+
                   if (not AReceiptNo.IsEmpty) and
                      (not UpdateSaleItem(LReceiptNo, PI, AResMsg)) then
                     raise Exception.Create(AResMsg);
@@ -2909,7 +2772,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.AddBowler(const ALaneNo: ShortInt; const AAssignNo: string; const ABowlerRec: TBowlerRec; var AResMsg: string): Boolean;
 const
   CS_API = 'Z106_regBowler';
@@ -2946,7 +2808,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -2963,7 +2824,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.ChangeBowler(const ALaneNo: ShortInt; const AAssignNo: string; const ANewBowlerRec: TBowlerRec; var AResMsg: string): Boolean;
 const
   CS_API = 'Z107_chgBowler';
@@ -2999,7 +2859,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -3016,7 +2875,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.RelocateLane(const ALaneNo, ATargetLaneNo: ShortInt; var AResMsg: string): Boolean;
 const
   CS_API = 'Z109_chgLaneMove';
@@ -3040,7 +2898,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -3057,8 +2914,7 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
-function TBPDM.RelocateBowler(const AAssignNo, ABowlerId: string; const ATargetLaneNo: ShortInt; var AResMsg: string): Boolean;
+function TBPDM.RelocateBowler(const AAssignNo, ABowlerId: string; const ATargetLaneNo: ShortInt; var AResMsg, ATargetAssignNo, ATargetBowlerId : string): Boolean;
 const
   CS_API = 'Z110_chgLaneBowlerMove';
 var
@@ -3083,11 +2939,13 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('게임서버 Error #%s, %s', [LResCode, AResMsg]));
+
+      ATargetAssignNo := CkJsonObject__stringOf(JO, 'assign_no');
+      ATargetBowlerId := CkJsonObject__stringOf(JO, 'bowler_id');
       Result := True;
     except
       on E: Exception do
@@ -3101,8 +2959,97 @@ begin
   end;
 end;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+function TBPDM.CheckOut(const ALaneNo: ShortInt; const AAssignNo: string; const AReceiptNo: string; const ABR: TArray<TBowlerRec>; var AResMsg: string): Boolean;
+const
+  CS_API = 'Z119_chgCheckOut';
+var
+  JO, RO: HCkJsonObject;
+  JA: HCkJsonArray;
+  PI: TProdItemRec;
+  LReceiptNo, LReqJson, LRespJson, LResCode, LAssignNo, LBowlerId: string;
+  LCount, LLaneNo, LPaymentType, LGameCnt, LGameMin: Integer;
+  I: ShortInt;
+begin
+  Result := False;
+  AResMsg := '';
+  LReceiptNo := AReceiptNo;
 
+  JO := CkJsonObject_Create;
+  JA := nil;
+  try
+    CkJsonObject_UpdateString(JO, 'store_cd', PWideChar(Global.StoreInfo.StoreCode));
+    CkJsonObject_UpdateString(JO, 'api', PWideChar(CS_API));
+    CkJsonObject_UpdateString(JO, 'assign_no', PWideChar(AAssignNo));
+    CkJsonObject_UpdateString(JO, 'user_id', PWideChar(Global.UserInfo.UserId));
+    LReqJson := CkJsonObject__emit(JO);
+    LRespJson := '';
+    try
+      if not RequestToGameServer(CS_API, LReqJson, LRespJson, AResMsg) then
+        raise Exception.Create(AResMsg);
+      if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
+        raise Exception.Create(CkJsonObject__lastErrorText(JO));
+      LResCode := CkJsonObject__stringOf(JO, 'result_cd');
+      AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
+      if (LResCode <> CO_RESULT_SUCCESS) then
+        raise Exception.Create(Format('게임서버 Error #%s, %s', [LResCode, AResMsg]));
+
+      //매출 내역 갱신
+      JA := CkJsonObject_ArrayOf(JO, 'result_data');
+      LCount := CkJsonArray_getSize(JA);
+
+      for I := 0 to High(ABR) do
+      begin
+        if (I < LCount) then
+        begin
+          RO := CkJsonArray_ObjectAt(JA, I);
+
+          //LLaneNo := CkJsonObject_IntOf(RO, 'lane_no');
+          LAssignNo := CkJsonObject__stringOf(RO, 'assign_no');
+          LBowlerId := CkJsonObject__stringOf(RO, 'bowler_id');
+          LPaymentType := CkJsonObject_IntOf(RO, 'payment_type');
+          LGameCnt := CkJsonObject_IntOf(RO, 'game_cnt');
+          LGameMin := CkJsonObject_IntOf(RO, 'game_min');
+
+          if (not ABR[I].ProdInfo.ProdCode.IsEmpty) and (ABR[I].MembershipSeq = 0) and (LPaymentType = 0) then
+          begin
+            PI.Clear;
+            PI.AssignLaneNo := ABR[I].ProdInfo.AssignLaneNo;
+            PI.AssignNo := ABR[I].ProdInfo.AssignNo;
+            PI.BowlerId := ABR[I].ProdInfo.BowlerId;
+            PI.ProdDiv := ABR[I].ProdInfo.ProdDiv;
+            PI.ProdDetailDiv := ABR[I].ProdInfo.ProdDetailDiv;
+            PI.ProdCode := ABR[I].ProdInfo.ProdCode;
+            PI.ProdName := ABR[I].ProdInfo.ProdName;
+            PI.ProdAmt := ABR[I].ProdInfo.ProdAmt;
+            PI.OrderQty := LGameCnt;
+            if (not AReceiptNo.IsEmpty) and
+               (not UpdateSaleItem(LReceiptNo, PI, AResMsg)) then
+              raise Exception.Create(AResMsg);
+          end;
+        end;
+      end;
+
+      { 영수증 데이터 업데이트 }
+      if (not AReceiptNo.IsEmpty) and
+         (not UpdateReceipt(AReceiptNo, AResMsg)) then
+        raise Exception.Create(AResMsg);
+
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        AResMsg := E.Message;
+        UpdateLog(Format('%s.Exception = %s', [CS_API, E.Message]));
+      end;
+    end;
+  finally
+    if Assigned(JA) then
+      CkJsonArray_Dispose(JA);
+    CkJsonObject_Dispose(JO);
+  end;
+end;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 function TBPDM.RequestToPartnerCenter(const AProcName, AUrl, AMethod, AReqJson: string; var ARespJson, AResMsg: string): Boolean;
 var
   HC: TIdHTTP;
@@ -3125,7 +3072,6 @@ begin
         SS.SaveToFile(Global.DirInfo.LogDir + Format('%s.Request.json', [AProcName]))
       else
         WriteToFile(Global.DirInfo.LogDir + Format('%s.Request.url', [AProcName]), LUrl, True);
-
       if (LowerCase(Global.PartnerCenter.Host.Substring(0, 5)) = 'https') then
         HC.IOHandler := SSL;
       HC.Request.Method := AMethod;
@@ -3153,7 +3099,6 @@ begin
       end
       else
         raise Exception.Create(Format('%s is unsupported http method', [AMethod.QuotedString]));
-
       RS.SaveToFile(Global.DirInfo.LogDir + Format('%s.Response.json', [AProcName]));
       RBS := PAnsiChar(RS.Memory);
       SetCodePage(RBS, 65001, False);
@@ -3174,7 +3119,6 @@ begin
     FreeAndNil(HC);
   end;
 end;
-
 function TBPDM.GetToken(const AHostUrl, ATerminalId, ASecretKey: string; var AToken, AResMsg: string): Boolean;
 const
   CS_API = 'token';
@@ -3234,7 +3178,6 @@ begin
     FreeAndNil(HC);
   end;
 end;
-
 function TBPDM.GetStoreInfo(const AStoreCode: string; var AResMsg: string): Boolean;
 const
   CS_API = 'B001_getStore';
@@ -3253,12 +3196,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       Global.StoreInfo.StoreName := CkJsonObject__stringOf(JO, 'result_data.store_nm');
       Global.StoreInfo.BizNo := CkJsonObject__stringOf(JO, 'result_data.biz_no');
       Global.StoreInfo.BossName := CkJsonObject__stringOf(JO, 'result_data.boss_nm');
@@ -3278,6 +3219,8 @@ begin
       Global.StoreInfo.Canceled := (CkJsonObject__stringOf(JO, 'result_data.cancel_yn') = CO_RESULT_YES);
       Global.StoreInfo.IsHoliday := (CkJsonObject__stringOf(JO, 'result_data.store_holiday_yn') = CO_RESULT_YES);
       Global.StoreInfo.ShoesRentProdCode := CkJsonObject__stringOf(JO, 'result_data.shoes_prod_cd');
+      Global.StoreInfo.DefaultGameProdCode := CkJsonObject__stringOf(JO, 'result_data.game_prod_cd');
+      Global.StoreInfo.DefaultTimeProdCode := CkJsonObject__stringOf(JO, 'result_data.time_prod_cd');
       if Global.StoreInfo.Canceled then
         raise Exception.Create('계약이 해지된 가맹점 입니다.');
       Result := True;
@@ -3292,7 +3235,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetTerminalInfo(const ATerminalId: string; var AResMsg: string): Boolean;
 const
   CS_API = 'B101_getTerminal';
@@ -3311,12 +3253,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       with Global.TerminalInfo do
       begin
         TerminalDiv := CkJsonObject__stringOf(JO, 'result_data.terminal_div');
@@ -3345,7 +3285,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.CheckLogin(const AUserId, ATerminalPwd: string; const ASaveId: Boolean; var AResMsg: string): Boolean;
 const
   CS_API = 'A002_login';
@@ -3369,12 +3308,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       Global.UserInfo.UserId := AUserId;
       Global.UserInfo.UserName := CkJsonObject__stringOf(JO, 'result_data.account_nm');
       Global.UserInfo.TerminalPwd := ATerminalPwd;
@@ -3392,12 +3329,10 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetCodeList(var AResMsg: string): Boolean;
 begin
   Result := GetCodeList('', AResMsg);
 end;
-
 function TBPDM.GetCodeList(const AGroupCode: string; var AResMsg: string): Boolean;
 const
   CS_API = 'B002_getStoreCodeList';
@@ -3422,12 +3357,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -3441,7 +3374,6 @@ begin
           if (CkJsonObject__stringOf(RO, 'use_yn') <> CO_RESULT_YES) or
              (CkJsonObject__stringOf(RO, 'del_yn') = CO_RESULT_YES) then
             Continue;
-
           SetLength(LFields, 0);
           LSValue := CkJsonObject__stringOf(RO, 'group_cd');
           AddFieldInfo(LFields, 'group_cd', varString, LSValue);
@@ -3461,7 +3393,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRCodeList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -3480,7 +3411,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetLaneList(var AResMsg: string): Boolean;
 const
   CS_API = 'B501_getLaneList';
@@ -3505,12 +3435,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -3529,7 +3457,6 @@ begin
             AssignLaneNo := Global.LaneInfo.Lanes[I].LaneNo;
             LaneName := CkJsonObject__stringOf(RO, 'lane_nm');
             DeviceId := CkJsonObject__stringOf(RO, 'device_id');
-
             SetLength(LFields, 0);
             AddFieldInfo(LFields, 'lane_no', varInteger, LaneNo);
             AddFieldInfo(LFields, 'lane_nm', varString, LaneName);
@@ -3545,7 +3472,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRLaneList, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.LaneList := Global.DateTime.FormattedCurrentDateTime;
@@ -3565,7 +3491,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetLockerList(var AResMsg: string): Boolean;
 const
   CS_API = 'F001_getLockerList';
@@ -3590,12 +3515,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -3626,7 +3549,6 @@ begin
             StartDate := CkJsonObject__stringOf(RO, 'start_date');
             EndDate := CkJsonObject__stringOf(RO, 'end_date');
             LockerMemo := CkJsonObject__stringOf(RO, 'memo');
-
             SetLength(LFields, 0);
             AddFieldInfo(LFields, 'locker_no', varInteger, LockerNo);
             AddFieldInfo(LFields, 'locker_nm', varString, LockerName);
@@ -3654,7 +3576,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRLockerList, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.LockerList := Global.DateTime.FormattedCurrentDateTime;
@@ -3674,7 +3595,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetClubList(var AResMsg: string): Boolean;
 const
   CS_API = 'B302_getClubList';
@@ -3699,12 +3619,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -3744,7 +3662,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRClubList, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.ClubList := Global.DateTime.FormattedCurrentDateTime;
@@ -3764,7 +3681,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetMemberList(var AResMsg: string): Boolean;
 const
   CS_API = 'B301_getMemberList';
@@ -3790,12 +3706,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -3857,7 +3771,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshMemberList(AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.MemberList := Global.DateTime.FormattedCurrentDateTime;
@@ -3877,7 +3790,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetMembership(const AMemberNo: string; var AResMsg: string): Boolean;
 begin
   Result := GetMembership(AMemberNo, '', '', AResMsg);
@@ -3905,12 +3817,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       LMemberNo := CkJsonObject__stringOf(JO, 'result_data.member_no');
       with TABSQuery.Create(nil) do
       try
@@ -3965,7 +3875,6 @@ begin
         end;
         if not SQL.Text.IsEmpty then
           ExecSQL;
-
         { 회원 보유 라커 상품 }
         InMemory := True;
         SQL.Clear;
@@ -4024,12 +3933,12 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetProdGameList(var AResMsg: string): Boolean;
 begin
-  Result := GetProdGameList('', '', '', False, AResMsg);
+  //Result := GetProdGameList('', '', '', False, AResMsg);
+  Result := GetProdGameList('', '', FormatDateTime('yyyy-mm-dd hh:nn:ss', Now), AResMsg);
 end;
-function TBPDM.GetProdGameList(const AProdCode, AFeeDiv, ABaseDateTime: string; const ATodaySaleOnly: Boolean; var AResMsg: string): Boolean;
+function TBPDM.GetProdGameList(const AProdCode, AFeeDiv, ABaseDateTime: string; var AResMsg: string): Boolean;
 const
   CS_API = 'B202_getGameProdList';
 var
@@ -4051,18 +3960,16 @@ begin
   LTableName := 'MTProdGame';
   try
     try
-      LUri := Format('%s?store_cd=%s&terminal_id=%s&prod_cd=%s&fee_div=%s&today_sale_yn=%s&now_datetime=%s&search_datetime=%s',
-          [CS_API, Global.StoreInfo.StoreCode, Global.PartnerCenter.TerminalId, AProdCode, AFeeDiv, IfThen(ATodaySaleOnly, CO_RESULT_YES, CO_RESULT_NO), TIdURI.ParamsEncode(ABaseDateTime), '']);
+      LUri := Format('%s?store_cd=%s&terminal_id=%s&prod_cd=%s&fee_div=%s&now_datetime=%s&search_datetime=%s',
+          [CS_API, Global.StoreInfo.StoreCode, Global.PartnerCenter.TerminalId, AProdCode, AFeeDiv, TIdURI.ParamsEncode(ABaseDateTime), '']);
       if not RequestToPartnerCenter(CS_API, LUri, Id_HTTPMethodGet, '', LRespJson, AResMsg) then
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -4080,7 +3987,6 @@ begin
               raise Exception.Create(AResMsg);
             Continue;
           end;
-
           RA := CkJsonObject_ArrayOf(JO, 'prod_price_list');
           LCount2 := CkJsonArray_getSize(RA);
           LTodayYN := False;
@@ -4099,15 +4005,27 @@ begin
               LApplyStartTime := CkJsonObject__stringOf(RO, 'apply_start_time');
               LApplyEndTime := CkJsonObject__stringOf(RO, 'apply_end_time');
               LProdAmt := CkJsonObject_IntOf(RO, 'prod_amt');
-              if (LApplyStartTime <= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) and
-                 (LApplyEndTime >= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) then
+
+              if (LApplyStartTime < LApplyEndTime) then
               begin
-                LAllowTime := True;
-                Break;
+                if (LApplyStartTime <= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) and
+                   (LApplyEndTime >= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) then
+                begin
+                  LAllowTime := True;
+                  Break;
+                end;
+              end
+              else
+              begin
+                if (LApplyStartTime <= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) or
+                   (LApplyEndTime >= Global.DateTime.FormattedCurrentTime.Substring(0, 5)) then
+                begin
+                  LAllowTime := True;
+                  Break;
+                end;
               end;
             end;
           end;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'prod_cd', varString, LProdCode);
           AddFieldInfo(LFields, 'membership_yn', varBoolean, False);
@@ -4148,7 +4066,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRProdGame, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.ProdGame := Global.DateTime.FormattedCurrentDateTime;
@@ -4170,7 +4087,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetProdMembershipList(var AResMsg: string): Boolean;
 const
   CS_API = 'B206_getMembershipProdList';
@@ -4197,12 +4113,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -4265,7 +4179,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRProdGame, AResMsg) then
         raise Exception.Create(AResMsg);
       if not RefreshABSDataSet(QRProdMembership, AResMsg) then
@@ -4289,7 +4202,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetProdLockerList(var AResMsg: string): Boolean;
 const
   CS_API = 'B203_getLockerProdList';
@@ -4315,12 +4227,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -4334,7 +4244,6 @@ begin
             raise Exception.Create(AResMsg);
           if (CkJsonObject__stringOf(RO, 'del_yn') = CO_RESULT_YES) then
             Continue;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'prod_cd', varString, LProdCode);
           LSValue := CkJsonObject__stringOf(RO, 'prod_detail_div');
@@ -4361,7 +4270,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRProdLocker, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.ProdLocker := Global.DateTime.FormattedCurrentDateTime;
@@ -4381,7 +4289,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetProdRentList(var AResMsg: string): Boolean;
 const
   CS_API = 'B205_getRentProdList';
@@ -4407,12 +4314,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -4426,7 +4331,6 @@ begin
             raise Exception.Create(AResMsg);
           if (CkJsonObject__stringOf(RO, 'del_yn') = CO_RESULT_YES) then
             Continue;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'prod_cd', varString, LProdCode);
           LSValue := CkJsonObject__stringOf(RO, 'prod_detail_div');
@@ -4453,7 +4357,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRProdRent, AResMsg) then
         raise Exception.Create(AResMsg);
       //볼링화 대여료 기본값
@@ -4480,7 +4383,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetProdGeneralList(var AResMsg: string): Boolean;
 const
   CS_API = 'B204_getGeneralProdList';
@@ -4506,12 +4408,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       with TABSQuery.Create(nil) do
@@ -4525,7 +4425,6 @@ begin
             raise Exception.Create(AResMsg);
           if (CkJsonObject__stringOf(RO, 'del_yn') = CO_RESULT_YES) then
             Continue;
-
           SetLength(LFields, 0);
           AddFieldInfo(LFields, 'prod_cd', varString, LProdCode);
           LSValue := CkJsonObject__stringOf(RO, 'prod_detail_div');
@@ -4552,7 +4451,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRProdGeneral, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.ProdGeneral := Global.DateTime.FormattedCurrentDateTime;
@@ -4572,7 +4470,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetPluList(var AResMsg: string): Boolean;
 const
   CS_API = 'B201_getPluList';
@@ -4600,12 +4497,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount1 := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -4664,7 +4559,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRPluList, AResMsg) then
         raise Exception.Create(AResMsg);
       Global.MasterUpdated.PluList := Global.DateTime.FormattedCurrentDateTime;
@@ -4690,7 +4584,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetSaleList(const AStartDate, AEndDate, AReceiptNo: string; var AResMsg: string): Boolean;
 const
   CS_API = 'G003_getSalesList';
@@ -4717,12 +4610,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -4788,7 +4679,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRReceiptList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -4807,7 +4697,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetSaleDetailList(const AReceiptNo: string; var AResMsg: string): Boolean;
 const
   CS_API = 'G004_getSales';
@@ -4833,12 +4722,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JO := CkJsonObject_ObjectOf(JO, 'result_data');
       with TABSQuery.Create(nil) do
       try
@@ -4915,7 +4802,6 @@ begin
         end;
         if not SQL.Text.IsEmpty then
           ExecSQL;
-
         LTableName := 'MTSaleItemList';
         if not EmptyABSTable(LTableName, True) then
           raise Exception.Create(Format('EmptyABSTable.Exception = %s', [LTableName]));
@@ -4966,7 +4852,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRSaleItemList, AResMsg) then
         raise Exception.Create(AResMsg);
       if not RefreshABSDataSet(QRPaymentList, AResMsg) then
@@ -4987,7 +4872,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetRallyList(const AStartDate, AEndDate, ARallyTitle: string; const AClubSeq: Integer; var AResMsg: string): Boolean;
 const
   CS_API = 'E301_getCompetitionList';
@@ -5014,12 +4898,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -5071,7 +4953,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRRallyList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -5090,7 +4971,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.GetRallyEntryList(const ARallySeq: Integer; var AResMsg: string): Boolean;
 const
   CS_API = 'E302_getParticipantsList';
@@ -5115,12 +4995,10 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
         raise Exception.Create(Format('파트너센터 Error #%s, %s', [LResCode, AResMsg]));
-
       JA := CkJsonObject_ArrayOf(JO, 'result_data');
       LCount := CkJsonArray_getSize(JA);
       if not EmptyABSTable(LTableName, True) then
@@ -5167,7 +5045,6 @@ begin
         Close;
         Free;
       end;
-
       if not RefreshABSDataSet(QRRallyEntryList, AResMsg) then
         raise Exception.Create(AResMsg);
       Result := True;
@@ -5186,7 +5063,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostProdSale(ARI: TReceiptItemInfo; ASL: TArray<TProdItemRec>; APL: TArray<TPaymentItemRec>; var AResMsg: string): Boolean;
 const
   CS_API = 'G001_regSales';
@@ -5219,7 +5095,6 @@ begin
       CkJsonObject_UpdateNewArray(JO, 'orders');
       CkJsonObject_UpdateNewArray(JO, 'payment');
       CkJsonObject_UpdateNewArray(JO, 'coupon');
-
       for I := 0 to High(ASL) do
       begin
         CkJsonObject_putI(JO, I);
@@ -5238,7 +5113,6 @@ begin
         CkJsonObject_UpdateString(JO, 'orders[i].start_date', PWideChar(ASL[I].UseStartDate)); //yyyy-mm-dd
         CkJsonObject_UpdateInt(JO, 'orders[i].keep_amt', ASL[I].KeepAmt);
       end;
-
       for I := 0 to High(APL) do
       begin
         CkJsonObject_putI(JO, I);
@@ -5261,13 +5135,11 @@ begin
         CkJsonObject_UpdateString(JO, 'payment[i].card_acquir_cd', PWideChar(APL[I].BuyerCode));
         CkJsonObject_UpdateString(JO, 'payment[i].card_acquir_nm', PWideChar(APL[I].BuyerName));
       end;
-
       LReqJson := CkJsonObject__emit(JO);
       if not RequestToPartnerCenter(CS_API, LUri, Id_HTTPMethodPost, LReqJson, LRespJson, AResMsg) then
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5284,7 +5156,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostMember(const ANewMember: Boolean; const AMemberRec: TMemberInfoRec; var AResMsg: string): Boolean;
 var
   JO: HCkJsonObject;
@@ -5337,7 +5208,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5356,7 +5226,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostLockerClose(const ALockerNo: SmallInt; var AResMsg: string): Boolean;
 const
   CS_API = 'F002_closeLocker';
@@ -5378,7 +5247,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5395,7 +5263,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostSystemSetting(var AResMsg: string): Boolean;
 const
   CS_API = 'B102_chgTerminalConfig';
@@ -5421,7 +5288,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5439,7 +5305,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostCancelPayment(APL: TArray<TPaymentItemRec>; const AReceiptNo, AOrgReceiptNo: string; var AResMsg: string): Boolean;
 const
   CS_API = 'G002_refundSales';
@@ -5486,7 +5351,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5503,7 +5367,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostCancelPaymentPartial(APR: TPaymentItemRec; const ANewApproveNo: string; var AResMsg: string): Boolean;
 const
   CS_API = 'G007_cancelPayment';
@@ -5531,7 +5394,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5548,7 +5410,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostUpdateCashPayment(APR: TPaymentItemRec; var AResMsg: string): Boolean;
 const
   CS_API = 'G008_updateCashPayment';
@@ -5575,7 +5436,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5592,7 +5452,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 function TBPDM.PostRallySetting(const RR: TRallyInfoRec; var AResMsg: string): Boolean;
 const
   CS_API = 'E303_chgCompetition';
@@ -5622,7 +5481,6 @@ begin
         raise Exception.Create(AResMsg);
       if not CkJsonObject_Load(JO, PWideChar(LRespJson)) then
         raise Exception.Create(CkJsonObject__lastErrorText(JO));
-
       LResCode := CkJsonObject__stringOf(JO, 'result_cd');
       AResMsg := CkJsonObject__stringOf(JO, 'result_msg');
       if (LResCode <> CO_RESULT_SUCCESS) then
@@ -5639,7 +5497,6 @@ begin
     CkJsonObject_Dispose(JO);
   end;
 end;
-
 procedure TBPDM.QRAssignListAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5660,7 +5517,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRAssignListCalcFields(DataSet: TDataSet);
 var
   LGameDiv, LAssignIndex, LAssignStatus, LPaymentType: ShortInt;
@@ -5670,11 +5526,9 @@ begin
   begin
     if (RecordCount = 0) then
       Exit;
-
     FieldValues['calc_rally_yn'] := (FieldByName('rally_seq').AsInteger > 0);
     FieldValues['calc_lane_no'] := Format('%d (%d)', [FieldByName('lane_no').AsInteger, FieldByName('assign_lane_no').AsInteger]);
     FieldValues['calc_bowler_nm'] := Format('[%s] %s', [FieldByName('bowler_id').AsString, FieldByName('bowler_nm').AsString]);
-
     LGameDiv := FieldByName('game_div').AsInteger;
     case LGameDiv of
       CO_RATEPLAN_GAME: LValue := '게임제';
@@ -5683,7 +5537,6 @@ begin
       LValue := LGameDiv.ToString;
     end;
     FieldValues['calc_game_div'] := LValue;
-
     LAssignStatus := FieldByName('assign_status').AsInteger;
     LAssignIndex := FieldByName('assign_index').AsInteger;
     case LAssignStatus of
@@ -5701,7 +5554,6 @@ begin
     FieldValues['calc_assign_status'] := LValue;
     LValue := FieldByName('receipt_no').AsString.SubString(14);
     FieldValues['calc_receipt_no'] := Format('%d%s', [Succ(LAssignIndex), IfThen(LValue.IsEmpty, '', ':' + LValue)]);
-
     LPaymentType := FieldByName('payment_type').AsInteger;
     case LPaymentType of
       CO_PAYTYPE_DEFERRED: LValue := '후불';
@@ -5710,7 +5562,6 @@ begin
       LValue := LPaymentType.ToString;
     end;
     FieldValues['calc_payment_type'] := LValue;
-
     LFeeDiv := FieldByName('fee_div').AsString;
     if (LFeeDiv = CO_GAMEFEE_BASIC) then
       LValue := '일반'
@@ -5723,7 +5574,6 @@ begin
     else
       LValue := LFeeDiv;
     FieldValues['calc_fee_div'] := LValue;
-
     LAssighRootDiv := FieldByName('assign_root_div').AsString;
     if (LAssighRootDiv = CO_CLIENT_KIOSK) then
       LValue := '키오스크'
@@ -5736,7 +5586,6 @@ begin
     FieldValues['calc_assign_root_div'] := LValue;
   end;
 end;
-
 procedure TBPDM.QRMemberListAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5749,7 +5598,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRMemberListCalcFields(DataSet: TDataSet);
 var
   LValue: string;
@@ -5761,7 +5609,6 @@ begin
     DataSet.FieldValues['calc_tel_no'] := LValue.Substring(0, 3) + '-' + LValue.Substring(3, 4) + '-' + LValue.Substring(7, 4);
   end;
 end;
-
 procedure TBPDM.QRMemberLockerAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5776,7 +5623,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRMemberLockerCalcFields(DataSet: TDataSet);
 var
   LSValue: string;
@@ -5789,7 +5635,6 @@ begin
       FieldValues['calc_locker_zone_code'] := '복도'
     else
       FieldValues['calc_locker_zone_code'] := LSValue;
-
     LSValue := FieldByName('locker_layer_code').AsString;
     if (LSValue = CO_LOCKER_LAYER_UPPER) then
       FieldValues['calc_locker_layer_code'] := '상단'
@@ -5797,7 +5642,6 @@ begin
       FieldValues['calc_locker_layer_code'] := '하단'
     else
       FieldValues['calc_locker_layer_code'] := LSValue;
-
     LIValue := FieldByName('locker_status').AsInteger;
     case LIValue of
       CO_LOCKER_EMPTY:
@@ -5813,7 +5657,6 @@ begin
     end;
   end;
 end;
-
 procedure TBPDM.QRMembershipAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5829,7 +5672,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRMembershipCalcFields(DataSet: TDataSet);
 var
   LIValue: Integer;
@@ -5859,7 +5701,6 @@ begin
       else
         FieldValues['calc_game_div'] := LIvalue.ToString;
     end;
-
     LIValue := FieldByName('use_status').AsInteger;
     case LIValue of
       CO_STATUS_INUSE:
@@ -5875,7 +5716,6 @@ begin
     end;
   end;
 end;
-
 procedure TBPDM.QRRallyListAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5889,7 +5729,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRRallyListCalcFields(DataSet: TDataSet);
 var
   LSValue: string;
@@ -5907,7 +5746,6 @@ begin
     FieldValues['calc_reg_date'] := FieldByName('reg_datetime').AsString.Substring(0, 10);
   end;
 end;
-
 procedure TBPDM.QRReceiptListAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5922,7 +5760,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRReceiptListCalcFields(DataSet: TDataSet);
 var
   LSValue: string;
@@ -5936,7 +5773,6 @@ begin
       FieldValues['calc_dc_amt'] := 0
     else
       FieldValues['calc_dc_amt'] := (FieldByName('dc_amt').AsInteger + FieldByName('coupon_dc_amt').AsInteger);
-
     LSValue := FieldByName('sale_root_div').AsString;
     if (LSValue = CO_CLIENT_POS) then
     begin
@@ -5953,7 +5789,6 @@ begin
       FieldValues['calc_sale_root_div'] := LSValue;
   end;
 end;
-
 procedure TBPDM.QRSaleItemAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -5970,7 +5805,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRSaleItemCalcFields(DataSet: TDataSet);
 var
   LProdDiv, LDetailDiv, LProdDivName: string;
@@ -6019,7 +5853,6 @@ begin
     end
     else
       LProdDivName := Format('%s-%s', [LProdDiv, LDetailDiv]);
-
     FieldValues['calc_prod_div'] := LProdDivName;
     LSaleAmt   := (FieldByName('prod_amt').AsInteger * FieldByName('order_qty').AsInteger);
     LChargeAmt := (LSaleAmt - (FieldByName('dc_amt').AsInteger + FieldByName('use_point').AsInteger));
@@ -6028,7 +5861,6 @@ begin
     FieldValues['calc_vat']        := (LChargeAmt - Trunc(LChargeAmt / 1.1));
   end;
 end;
-
 procedure TBPDM.QRPaymentListAfterOpen(DataSet: TDataSet);
 begin
   DataSet.Close;
@@ -6043,7 +5875,6 @@ begin
     DataSet.Open;
   end;
 end;
-
 procedure TBPDM.QRPaymentListCalcFields(DataSet: TDataSet);
 var
   LIValue: Integer;
@@ -6059,7 +5890,6 @@ begin
       FieldValues['calc_approval_yn'] := '환불';
       FieldValues['calc_cancel_count'] := 1;
     end;
-
     LIValue := FieldByName('pay_method').AsInteger;
     case LIValue of
       CO_PAYMENT_CARD:
@@ -6080,7 +5910,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.OpenProdDataSet(const AGameDiv: ShortInt; const AProdDiv, ADetailDiv, AFeeDiv: string; const AMembershipOnly, ATodaySaleOnly: Boolean; var AResMsg: string): Boolean;
 var
   LTableName: string;
@@ -6170,7 +5999,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.AddPending(const AAssignLaneList: string; var AResMsg: string): Boolean;
 var
   LFields: TArray<TFieldInfoRec>;
@@ -6205,7 +6033,6 @@ begin
 //        raise Exception.Create(Format('MakeInsertSQL(%s).ErrorCode: %d', [LTableName, GetLastError]));
 //      SQL.Text := LSQL;
 //      ExecSQL;
-
       Close;
       SQL.Clear;
       SQL.Add(Format('UPDATE TBSaleItem SET receipt_no = %s, user_id = %s, update_dttm = %s WHERE assign_lane_no IN (%s);',
@@ -6215,7 +6042,6 @@ begin
       SQL.Add(Format('UPDATE TBCoupon SET receipt_no = %s, user_id = %s, update_dttm = %s  WHERE assign_lane_no IN (%s);',
                 [LReceiptNo.QuotedString, Global.UserInfo.UserId.QuotedString, LUpdateTime.QuotedString, AAssignLaneList]));
       ExecSQL;
-
       Close;
       SQL.Clear;
       SQL.Add(Format('INSERT INTO TBReceiptPend (SELECT * FROM TBReceipt WHERE receipt_no = %s);', [LReceiptNo.QuotedString]));
@@ -6223,7 +6049,6 @@ begin
       SQL.Add(Format('INSERT INTO TBPaymentPend (SELECT * FROM TBPayment WHERE receipt_no = %s);', [LReceiptNo.QuotedString]));
       SQL.Add(Format('INSERT INTO TBCouponPend (SELECT * FROM TBCoupon WHERE receipt_no = %s);', [LReceiptNo.QuotedString]));
       ExecSQL;
-
       Close;
       SQL.Clear;
       SQL.Add(Format('DELETE FROM TBReceipt WHERE receipt_no = %s;', [LReceiptNo.QuotedString]));
@@ -6231,7 +6056,6 @@ begin
       SQL.Add(Format('DELETE FROM TBPayment WHERE receipt_no = %s;', [LReceiptNo.QuotedString]));
       SQL.Add(Format('DELETE FROM TBCoupon WHERE receipt_no = %s;', [LReceiptNo.QuotedString]));
       ExecSQL;
-
       Result := True;
       UpdateLog(Format('AddPending(%s).Success = 보류 등록', [LReceiptNo]));
     except
@@ -6246,7 +6070,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.DeletePending(const AReceiptNo: string; var AResMsg: string): Boolean;
 var
   SL: TStringList;
@@ -6280,7 +6103,6 @@ begin
       end;
       for var I: ShortInt := 0 to Pred(SL.Count) do
         UpdateLog(SL[I]);
-
       Close;
       SQL.Clear;
       SQL.Add(Format('DELETE FROM TBCouponPend WHERE receipt_no = %s;', [AReceiptNo.QuotedString]));
@@ -6303,7 +6125,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.LoadPending(const AReceiptNo: string; var AResMsg: string): Boolean;
 begin
   Result := False;
@@ -6331,7 +6152,6 @@ begin
     Free;
   end;
 end;
-
 function TBPDM.MakeReceiptJson(ARI: TReceiptItemInfo; ASL: TArray<TProdItemRec>; APL: TArray<TPaymentItemRec>; const ASaleDate, ASaleTime: string; var AResMsg: string): string;
 var
   JO: HCkJsonObject;
@@ -6357,7 +6177,6 @@ begin
     CkJsonObject_UpdateNewArray(JO, 'PaymentItems');
     CkJsonObject_UpdateNewArray(JO, 'LockerItems');
     CkJsonObject_UpdateNewArray(JO, 'CouponItems');
-
     //영수증 출력 정보
     if (Length(APL) > 0) then
     begin
@@ -6378,7 +6197,6 @@ begin
       CkJsonObject_UpdateString(JO, 'BaseInfo.Bottom3', '');
       CkJsonObject_UpdateString(JO, 'BaseInfo.Bottom4', '');
     end;
-
     //회원 정보
     with Global.MemberInfo do
       if (not MemberNo.IsEmpty) then
@@ -6391,7 +6209,6 @@ begin
         CkJsonObject_UpdateString(JO, 'MemberInfo.LockerList', PWideChar(LockerList));
         CkJsonObject_UpdateString(JO, 'MemberInfo.LockerExpiredDate', PWideChar(FormattedDateString(LockerExpiredDate)));
       end;
-
     try
       //주문 상품 내역
       J := 0;
@@ -6407,7 +6224,6 @@ begin
           CkJsonObject_UpdateInt(JO, 'ProductItems[i].ProdAmt', LProdAmt);
           CkJsonObject_UpdateInt(JO, 'ProductItems[i].Vat', LVat);
           CkJsonObject_UpdateInt(JO, 'ProductItems[i].OrderQty', OrderQty);
-
           if (ProdDiv = CO_PROD_LOCKER) then
           begin
             Inc(J);
@@ -6420,7 +6236,6 @@ begin
           end;
         end;
       end;
-
       //결제 내역
       for I := 0 to Pred(Length(APL)) do
         with APL[I] do
@@ -6437,7 +6252,6 @@ begin
           else
             CkJsonObject_UpdateString(JO, 'PaymentItems[i].PayCode', PWideChar('ptVoid'));
           end;
-
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].IsApproval', PWideChar(BoolToStr(IsApproval, True)));
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].IsManualInput', PWideChar(BoolToStr(IsManualInput, True)));
           CkJsonObject_UpdateInt(JO, 'PaymentItems[i].ApprovalAmt', ApproveAmt);
@@ -6451,7 +6265,6 @@ begin
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].BuyerName', PWideChar(BuyerName));
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].BuyerTypeName',  PWideChar(BuyerCode));
         end;
-
       Result := CkJsonObject__emit(JO);
       SS.WriteString(Result);
       SS.SaveToFile(Global.DirInfo.LogDir + 'MakeReceiptJson.json');
@@ -6467,7 +6280,6 @@ begin
     end;
   end;
 end;
-
 function TBPDM.MakeCancelReceiptJson(ARI: TReceiptItemInfo; APL: TArray<TPaymentItemRec>; var AResMsg: string): string;
 var
   JO: HCkJsonObject;
@@ -6492,7 +6304,6 @@ begin
       CkJsonObject_UpdateNewArray(JO, 'ProductItems');
       CkJsonObject_UpdateNewArray(JO, 'PaymentItems');
       CkJsonObject_UpdateNewArray(JO, 'CouponItems');
-
       //영수증 출력 정보
       CkJsonObject_UpdateString(JO, 'BaseInfo.SaleDate', PWideChar(Global.DateTime.CurrentDate)); //거래일자(yyyy-mm-dd)
       CkJsonObject_UpdateString(JO, 'BaseInfo.SaleTime', PWideChar(Global.DateTime.CurrentTime)); //거래시각(hh:nn)
@@ -6510,7 +6321,6 @@ begin
       CkJsonObject_UpdateString(JO, 'BaseInfo.Bottom2', '');
       CkJsonObject_UpdateString(JO, 'BaseInfo.Bottom3', '');
       CkJsonObject_UpdateString(JO, 'BaseInfo.Bottom4', '');
-
       //회원 정보
       with Global.MemberInfo do
         if (not MemberNo.IsEmpty) then
@@ -6523,7 +6333,6 @@ begin
           CkJsonObject_UpdateString(JO, 'MemberInfo.LockerList', PWideChar(LockerList));
           CkJsonObject_UpdateString(JO, 'MemberInfo.LockerExpiredDate', PWideChar(FormattedDateString(LockerExpiredDate)));
         end;
-
       //결제 내역
       for var I: ShortInt := 0 to High(APL) do
         with APL[I] do
@@ -6541,7 +6350,6 @@ begin
           else
             CkJsonObject_UpdateString(JO, 'PaymentItems[i].PayCode', PWideChar('ptVoid'));
           end;
-
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].IsApproval', PWideChar(BoolToStr(IsApproval, True)));
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].IsManualInput', PWideChar(BoolToStr(IsManualInput, True)));
           CkJsonObject_UpdateInt(JO, 'PaymentItems[i].ApprovalAmt', ApproveAmt);
@@ -6555,7 +6363,6 @@ begin
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].BuyerName', PWideChar(BuyerName));
           CkJsonObject_UpdateString(JO, 'PaymentItems[i].BuyerTypeName',  PWideChar(BuyerCode));
         end;
-
       Result := CkJsonObject__emit(JO);
       SS.WriteString(Result);
       SS.SaveToFile(Global.DirInfo.LogDir + 'MakeCancelReceiptJson.json');
@@ -6571,5 +6378,4 @@ begin
     FreeAndNil(SS);
   end;
 end;
-
 end.

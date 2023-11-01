@@ -244,6 +244,7 @@ begin
       PM.AddParams(CPP_PROD_NM, FieldByName('prod_nm').AsString);
       PM.AddParams(CPP_VALUE, FieldByName('prod_amt').AsInteger);
       PM.AddParams(CPP_MEMBERSHIP_SEQ, 0);
+      PM.AddParams(CPP_GAME_CNT, FieldByName('use_game_cnt').AsInteger);
       PM.AddParams(CPP_GAME_MIN, FieldByName('use_game_min').AsInteger);
       PM.PluginMessageToId(FOwnerId);
       Self.ModalResult := mrOK;

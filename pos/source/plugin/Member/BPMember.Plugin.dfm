@@ -51,7 +51,7 @@ object BPMemberForm: TBPMemberForm
       Left = 43
       Top = 5
       Width = 95
-      Height = 13
+      Height = 28
       Margins.Left = 5
       Margins.Top = 5
       Margins.Right = 5
@@ -65,6 +65,7 @@ object BPMemberForm: TBPMemberForm
       Font.Style = []
       ParentFont = False
       StyleElements = []
+      ExplicitHeight = 13
     end
     object panHeaderToolbar: TPanel
       AlignWithMargins = True
@@ -417,7 +418,7 @@ object BPMemberForm: TBPMemberForm
           Margins.Top = 0
           Margins.Right = 0
           Margins.Bottom = 0
-          Caption = #44172#51076#49345#54408' '#49440#53469
+          Caption = #51201#50857
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -15

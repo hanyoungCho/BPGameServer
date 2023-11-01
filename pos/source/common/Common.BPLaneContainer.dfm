@@ -296,7 +296,7 @@ object BPLaneContainer: TBPLaneContainer
       Left = 122
       Top = 3
       Width = 37
-      Height = 40
+      Height = 19
       Hint = #51068#48152' '#51060#46041
       Margins.Left = 0
       Align = alLeft
@@ -309,7 +309,6 @@ object BPLaneContainer: TBPLaneContainer
       ParentFont = False
       Layout = tlCenter
       StyleElements = [seClient, seBorder]
-      ExplicitHeight = 19
     end
     object LaneNoPanel: TPanel
       Left = 0
@@ -504,6 +503,7 @@ object BPLaneContainer: TBPLaneContainer
       '  , A.lane_shift_method'
       '  , A.lane_shift_cnt'
       '  , A.direction'
+      '  , A.to_cnt'
       '  , A.frame_no'
       '  , A.entry_seq'
       '  , A.bowler_id'

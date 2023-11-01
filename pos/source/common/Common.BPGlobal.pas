@@ -1914,6 +1914,10 @@ begin
     TerminalInfo.VanTID := ReadString('TerminalInfo', 'VanTID', '');
     TerminalInfo.PaycoTID := ReadString('TerminalInfo', 'PaycoTID', '');
 
+    { VAN 정보 }
+    VanModule.VanCode := ReadString('StoreInfo', 'VanCode', 'KCP');
+    VanModule.ApplyConfigAll;
+
     { 게임서버 설정 }
     GameServer.APIHost := ReadString('GameServer', 'APIHost', CO_DEFAULT_GAMESERVER_HOST);
     GameServer.APIPort := ReadInteger('GameServer', 'APIPort', CO_DEFAULT_GAMESERVER_API_PORT);

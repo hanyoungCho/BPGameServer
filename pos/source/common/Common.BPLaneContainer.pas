@@ -351,6 +351,8 @@ var
   PM: TPluginMessage;
 begin
   try
+    SendToMainForm(CPC_GAME_REFRESH_FORCE);
+
     PM := TPluginMessage.Create(Self);
     with PM do
     try
@@ -840,12 +842,20 @@ end;
 procedure TBPLaneContainer.DoGameAssign(const AAssignNo: string);
 var
   PM: TPluginMessage;
+  LResMsg: string;
+  bHold: Boolean;
 begin
-  if (LaneStatus = CO_LANE_HOLD) then
+  bHold := False;
+
+  //if (LaneStatus in [CO_LANE_READY, CO_LANE_HOLD]) then
   begin
-    BPMsgBox(Self.Handle, mtWarning, '알림',
-      ErrorString(LaneNo.ToString) + ' 레인은 현재 임시 예약 상태입니다.' + _BR + '임시 예약을 취소하거나, 잠시 후 다시 시도하여 주십시오.', ['확인'], 5);
-    Exit;
+    if not BPDM.SetHoldLane(LaneNo, True, LResMsg) then
+    begin
+      BPMsgBox(Self.Handle, mtWarning, '알림',
+        ErrorString(LaneNo.ToString) + ' 레인은 현재 임시 예약 상태입니다.' + _BR + '임시 예약을 취소하거나, 잠시 후 다시 시도하여 주십시오.', ['확인'], 5);
+      Exit;
+    end;
+    bHold := True;
   end;
 
   PM := TPluginMessage.Create(nil);
@@ -858,6 +868,13 @@ begin
   finally
     FreeAndNil(PM);
   end;
+
+  if bHold = True then
+  begin
+    if (not BPDM.SetHoldLane(LaneNo, False, LResMsg)) then
+      BPMsgBox(Self.Handle, mtError, '알림', Format('%s 명령 전송에 실패하였습니다.', ['임시예약']) + _BR + ErrorString(LResMsg), ['확인'], 5);
+  end;
+
 end;
 
 procedure TBPLaneContainer.DoBowlerPause(const AJobName: string; const AValue: Boolean);

@@ -517,6 +517,7 @@ object BPPaymentCashForm: TBPPaymentCashForm
       DecimalPlaces = 0
       DisplayFormat = ',0'
       DynProps = <>
+      Enabled = False
       EditButtons = <>
       Font.Charset = DEFAULT_CHARSET
       Font.Color = 16744448

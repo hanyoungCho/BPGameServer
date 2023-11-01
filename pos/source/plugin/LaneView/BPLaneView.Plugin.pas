@@ -518,6 +518,8 @@ begin
     if (PluginManager.OpenModal('BPAssignGame' + CO_DEFAULT_EXT_PLUGIN, PM) = mrOK) then
     begin
       SendToMainForm(CPC_GAME_REFRESH_DELAY);
+      //SendToMainForm(CPC_GAME_REFRESH_FORCE);
+
       BPMsgBox(Self.Handle, mtInformation, '알림', '레인 배정 등록이 완료되었습니다.', ['확인'], 5);
     end;
   finally
@@ -833,6 +835,14 @@ end;
 
 procedure TBPLaneViewForm.mniLaneHoldClick(Sender: TObject);
 begin
+    {if (Global.LaneInfo.SelectedLanes.Count > 0) then
+    for I := 0 to Pred(Global.LaneInfo.SelectedLanes.Count) do
+      for J := 0 to Pred(Global.LaneInfo.LaneCount) do
+        if (Global.LaneInfo.Lanes[J].LaneNo = Global.LaneInfo.SelectedLanes.Item[I]) then
+          Global.LaneInfo.Lanes[J].Container.Selected := True;
+
+          }
+
   Global.LaneInfo.Lanes[FPopupLaneIndex].Container.DoPopupMenu(CO_POPUP_LANE_HOLD);
 end;
 

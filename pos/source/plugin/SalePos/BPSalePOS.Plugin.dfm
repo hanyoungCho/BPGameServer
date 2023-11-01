@@ -110,7 +110,6 @@ object BPSalePosForm: TBPSalePosForm
             TabOrder = 2
             WordWrap = True
             OnClick = btnItemClearClick
-            ExplicitLeft = 113
           end
           object btnItemIncQty: TBitBtn
             AlignWithMargins = True
