@@ -12,7 +12,7 @@ uses
 
   function DateStrToDateTime(ADateTime: string): TDateTime;
   function DateStrToDateTime2(ADateTime: string): TDateTime;
-  function DateStrToDateTime3(ADateTime: string): TDateTime;
+  //function DateStrToDateTime3(ADateTime: string): TDateTime;
   //암호화
   function Encode(const AStr: AnsiString): AnsiString;
   //복호화
@@ -94,7 +94,7 @@ begin
         StrToIntDef(Copy(ADateTime, 15, 2), 0), StrToIntDef(Copy(ADateTime, 18, 2), 0), 0);
   end;
 end;
-
+{
 //YYYYMMDDhhnnss 형식
 function DateStrToDateTime3(ADateTime: string): TDateTime;
 begin
@@ -108,7 +108,7 @@ begin
         StrToIntDef(Copy(ADateTime, 11, 2), 0), StrToIntDef(Copy(ADateTime, 13, 2), 0), 0);
   end;
 end;
-
+}
 //암호화
 function Encode(const AStr: AnsiString): AnsiString;
 const

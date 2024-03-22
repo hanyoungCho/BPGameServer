@@ -35,7 +35,8 @@ type
     function GetReserveView(ALaneNo: Integer): String;
     function GetReserveLastTime(ALaneNo: Integer): String; //예약시간 검증
 
-    function GetReserveAssignNoChk(AAssignNo: String; var AIdx, AIdx2, ALaneNo: Integer): Boolean;
+    function GetReserveAssignNoChk(AAssignNo: String; var RIdx, RIdx2, RLaneNo: Integer): Boolean;
+
     //property TeeboxLastNo: Integer read FTeeboxLastNo write FTeeboxLastNo;
   end;
 
@@ -355,7 +356,7 @@ begin
   Result := sStr;
 end;
 
-function TAssignReserve.GetReserveAssignNoChk(AAssignNo: String; var AIdx, AIdx2, ALaneNo: Integer): Boolean;
+function TAssignReserve.GetReserveAssignNoChk(AAssignNo: String; var RIdx, RIdx2, RLaneNo: Integer): Boolean;
 var
   i, j: Integer;
   bChk: Boolean;
@@ -371,9 +372,9 @@ begin
     begin
       if TReserveInfo(FList[i].ReserveList.Objects[j]).AssignNo = AAssignNo then
       begin
-        AIdx := i;
-        AIdx2 := j;
-        ALaneNo := FList[i].LaneNo;
+        RIdx := i;
+        RIdx2 := j;
+        RLaneNo := FList[i].LaneNo;
         bChk := True;
         Break;
       end;

@@ -22,13 +22,9 @@ type
     function GetTokenChk(AApiUrl, AUserId, AUserPw, AADToken: String): String;
 
     function SetErpApiJsonData(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
-    function SetErpApiNoneData(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
-    function SetErpApiNoneDataEncoding(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
+    function SetErpApiNoData(AJsonStr: AnsiString; AErpApi, AApiUrl, AADToken: String): String;
     function GetErpApi(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AGSToken: String): String;
 
-    function SetErpApiK710TeeboxTime(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
-
-    //property IdHTTP: TIdHTTP read FIdHTTP write FIdHTTP;
     property SocketError: Boolean read FSocketError write FSocketError;
   end;
 
@@ -209,82 +205,54 @@ begin
   end;
 end;
 
-function TApiServer.SetErpApiNoneData(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
+function TApiServer.SetErpApiNoData(AJsonStr: AnsiString; AErpApi, AApiUrl, AADToken: String): String;
 var
   ssData, ssTemp: TStringStream;
   sUrl: String;
   sRecvData: AnsiString;
+  jRecv: TJSONObject;
+  sRecvResultCd, sRecvResultMsg: String;
 begin
   with TIdHTTP.Create(nil) do
   try
     try
       Result := 'Fail';
+
       IOHandler := FSSL;
-
-      ssData := TStringStream.Create('');
       ssTemp := TStringStream.Create('');
+      ssData := TStringStream.Create(AJsonStr, TEncoding.UTF8);
 
-      //FIdHTTP.Request.ContentType := 'application/json';
-      //FIdHTTP.Request.CustomHeaders.Values['Authorization'] := 'Bearer ' + AADToken;
+      Request.ContentType := 'application/json';
       Request.CustomHeaders.Values['Authorization'] := 'Bearer ' + AADToken;
 
       ConnectTimeout := 2000;
       ReadTimeout := 2000;
 
-      ssData.WriteString(TIdURI.ParamsEncode('grant_type=client_credentials'));
-      sUrl := AApiUrl + '/wix/api/' + AErpApi + AJsonStr;
-      //FIdHTTP.Post(sUrl, ssData, ssTemp);
+      sUrl := AApiUrl + '/pick/api/' + AErpApi;
       Post(sUrl, ssData, ssTemp);
 
       sRecvData := TEncoding.UTF8.GetString(ssTemp.Bytes, 0, ssTemp.Size);
 
-      Result := sRecvData;
-    except
-      on e: Exception do
+      if (Copy(sRecvData, 1, 1) <> '{') or (Copy(sRecvData, Length(sRecvData), 1) <> '}') then
       begin
-        if StrPos(PChar(e.Message), PChar('Socket Error')) <> nil then
-          FSocketError := True;
-
-        Result := 'Exception : ' + AErpApi + ' / ' + e.Message;
+        Result := sRecvData;
+        Exit;
       end;
-    end
 
-  finally
-    FreeAndNil(ssData);
-    FreeAndNil(ssTemp);
-    Disconnect;
-    Free;
-  end;
-end;
+      jRecv := TJSONObject.ParseJSONValue(sRecvData) as TJSONObject;
+      sRecvResultCd := jRecv.GetValue('result_cd').Value;
+      sRecvResultMsg := jRecv.GetValue('result_msg').Value;
 
-function TApiServer.SetErpApiNoneDataEncoding(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
-var
-  ssData, ssTemp: TStringStream;
-  sUrl: AnsiString;
-  sRecvData: AnsiString;
-begin
-  with TIdHTTP.Create(nil) do
-  try
-    try
-      Result := 'Fail';
-      IOHandler := FSSL;
+      if sRecvResultCd <> '0000' then
+      begin
+        Result := '[' + sRecvResultCd + ']' + sRecvResultMsg;
+        FreeAndNil(jRecv);
+        Exit;
+      end;
 
-      ssData := TStringStream.Create('');
-      ssTemp := TStringStream.Create('');
+      FreeAndNil(jRecv);
 
-      Request.CustomHeaders.Values['Authorization'] := 'Bearer ' + AADToken;
-
-      ConnectTimeout := 2000;
-      ReadTimeout := 2000;
-
-      ssData.WriteString(TIdURI.ParamsEncode('grant_type=client_credentials'));
-      sUrl := TIdURI.URLEncode(AApiUrl + '/wix/api/' + AErpApi + AJsonStr);
-
-      Post(sUrl, ssData, ssTemp);
-
-      sRecvData := TEncoding.UTF8.GetString(ssTemp.Bytes, 0, ssTemp.Size);
-
-      Result := sRecvData;
+      Result := 'Success';
     except
       on e: Exception do
       begin
@@ -340,55 +308,6 @@ begin
     end
 
   finally
-    FreeAndNil(ssTemp);
-    Disconnect;
-    Free;
-  end;
-end;
-
-function TApiServer.SetErpApiK710TeeboxTime(AJsonStr: AnsiString; AErpApi: String; AApiUrl: String; AADToken: String): String;
-var
-  ssData, ssTemp: TStringStream;
-  sUrl: String;
-  sRecvData: AnsiString;
-begin
-  with TIdHTTP.Create(nil) do
-  try
-    try
-      Result := 'Fail';
-      IOHandler := FSSL;
-
-      ssData := TStringStream.Create('');
-      ssTemp := TStringStream.Create('');
-
-      //FIdHTTP.Request.ContentType := 'application/json';
-      //FIdHTTP.Request.CustomHeaders.Values['Authorization'] := 'Bearer ' + AADToken;
-      Request.CustomHeaders.Values['Authorization'] := 'Bearer ' + AADToken;
-
-      ConnectTimeout := 2000;
-      ReadTimeout := 2000;
-
-      ssData.WriteString(TIdURI.ParamsEncode('grant_type=client_credentials'));
-      sUrl := AApiUrl + '/wix/api/' + AErpApi + AJsonStr;
-
-      //FIdHTTP.Post(sUrl, ssData, ssTemp);
-      Post(sUrl, ssData, ssTemp);
-
-      sRecvData := TEncoding.UTF8.GetString(ssTemp.Bytes, 0, ssTemp.Size);
-
-      Result := sRecvData;
-    except
-      on e: Exception do
-      begin
-        if StrPos(PChar(e.Message), PChar('Socket Error')) <> nil then
-          FSocketError := True;
-
-        Result := 'Exception : ' + AErpApi + ' / ' + e.Message;
-      end;
-    end
-
-  finally
-    FreeAndNil(ssData);
     FreeAndNil(ssTemp);
     Disconnect;
     Free;

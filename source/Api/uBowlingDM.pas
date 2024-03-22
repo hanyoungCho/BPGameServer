@@ -43,6 +43,7 @@ type
     function UpdateAssignGameLeague(AUseSeqDate: String; AUseSeqNo: Integer; ALeagueYn: String): Boolean; // 리그
     function UpdateAssignGameType(AUseSeqDate: String; AUseSeqNo: Integer; AGameType: String): Boolean;
     function UpdateAssignLane(AUseSeqDate: String; AUseSeqNo: Integer; ALane: Integer): Boolean;
+    function UpdateExpectdEndDate(AAssignNo, AExpectdEndDate: String): Boolean; //예상종료시간
 
     function SelectAssignBowlerCnt(AAssignNo: String): Integer;
     function InsertAssignBowler(ALaneNo: Integer; AAssignNo: String; ABowlerInfoTM: TBowlerInfo): Boolean;
@@ -60,6 +61,7 @@ type
 
     function SelectAssignGameList(AAssignDt: String; AAssignSeq, AGameSeq: Integer): TList<TGameInfoDB>;
     function SelectAssignLastSeq(ADate: String):Integer; //마지막 배정순번
+    function SelectAssignLastUserSeq(ADate: String):Integer; //마지막 볼러순번
 
     function ChangeLaneHold(ALaneNo, AUse, AUserId: String): Boolean;
     function ChangeLaneStatus(ALaneNo, AStatus: String): Boolean;
@@ -438,7 +440,7 @@ var
   nNo: Integer;
   sLog: String;
 begin
-  Result := 'success';
+  Result := 'Success';
 
   sUseSeqDate := Copy(AAssignNo, 1, 8);
   sUseSeqNo := Copy(AAssignNo, 9, 4);
@@ -891,13 +893,10 @@ begin
         Connection := ConnectionDB;
 
         sSql := ' INSERT INTO tb_assign ' +
-                '( store_cd, assign_dt, assign_seq, game_seq, assign_lane_no, lane_no, game_div, game_type, assign_status, assign_root_div,';
-
-        if AAssign.ReserveDate <> '' then
-          sSql := sSql + ' reserve_datetime, expected_end_datetime, ';
-
-          sSql := sSql
-               + ' start_datetime, user_id ) ' +
+                '( store_cd, assign_dt, assign_seq, game_seq, assign_lane_no, lane_no, game_div, game_type, assign_status, assign_root_div,' +
+                 ' reserve_datetime, ' +
+                 //' expected_end_datetime, ';
+                 ' start_datetime, user_id ) ' +
                  ' VALUES ' +
                  '( ' + QuotedStr(global.Config.StoreCd) + ', '
                       + QuotedStr(AAssign.AssignDt) + ', '
@@ -908,16 +907,10 @@ begin
                       + IntToStr(AAssign.GameDiv) + ', '
                       + IntToStr(AAssign.GameType) + ', '
                       + IntToStr(AAssign.AssignStatus) + ', ' // 1 - 예약
-                      + QuotedStr('P') + ', ';
-
-        if AAssign.ReserveDate <> '' then
-        begin
-          sSql := sSql
+                      + QuotedStr('P') + ', '
                      + 'date_format(' + QuotedStr(AAssign.ReserveDate) + ', ''%Y%m%d%H%i%S''), '
-                     + 'date_format(' + QuotedStr(AAssign.ExpectdEndDate) + ', ''%Y%m%d%H%i%S''), ';
-        end;
-
-        sSql := sSql + ' now(), '
+                     //+ 'date_format(' + QuotedStr(AAssign.ExpectdEndDate) + ', ''%Y%m%d%H%i%S''), ';
+                     + ' now(), '
                      + QuotedStr(AUserId) + ');';
 
         Close;
@@ -1137,6 +1130,54 @@ begin
         on E: Exception do
         begin
           sLog := 'TBowlingDM.UpdateAssignGameDiv Exception: ' + E.Message;
+          Global.Log.LogWrite(sLog);
+        end;
+      end;
+
+    finally
+      Close;
+      Free;
+    end;
+  end;
+
+end;
+
+function TBowlingDM.UpdateExpectdEndDate(AAssignNo, AExpectdEndDate: String): Boolean;
+var
+  sSql, sLog: String;
+  sAssignDate, sAssignSeq: String;
+  nAssignSeq: Integer;
+begin
+  Result := False;
+
+  sAssignDate := Copy(AAssignNo, 1, 8);
+  sAssignSeq := Copy(AAssignNo, 9, 4);
+  nAssignSeq := StrToInt(sAssignSeq);
+  sAssignSeq := IntToStr(nAssignSeq);
+
+  with TUniQuery.Create(nil) do
+  begin
+
+    try
+      try
+        Connection := ConnectionDB;
+
+        sSql := ' update tb_assign set ' +
+                '        expected_end_datetime = ' + 'date_format(' + QuotedStr(AExpectdEndDate) + ', ''%Y%m%d%H%i%S'')' +
+                ' where store_cd = ' + QuotedStr(global.Config.StoreCd) +
+                ' and assign_dt = ' + QuotedStr(sAssignDate) +
+                ' and assign_seq = ' + sAssignSeq;
+
+        Close;
+        SQL.Text := sSql;
+        Prepared := True;
+        ExecSQL;
+
+        Result := True;
+      except
+        on E: Exception do
+        begin
+          sLog := 'TBowlingDM.UpdateExpectdEndDate Exception: ' + E.Message;
           Global.Log.LogWrite(sLog);
         end;
       end;
@@ -1996,6 +2037,42 @@ begin
     if not IsEmpty then
     begin
       nSeq := FieldByName('max_assign_seq').AsInteger;
+      Result := nSeq;
+    end;
+
+  finally
+    Close;
+    Free;
+  end;
+
+end;
+
+function TBowlingDM.SelectAssignLastUserSeq(ADate: String):Integer;
+var
+  sSql, sSeq: String;
+  nSeq: Integer;
+begin
+  Result := 1;
+
+  with TUniQuery.Create(nil) do
+  try
+    Connection := ConnectionDB;
+    sSql := ' select Max(bowler_id) as max_user_seq from tb_assign_bowler ' +
+            '  where store_cd = ' + QuotedStr(global.Config.StoreCd) +
+            '    and assign_dt = ' + QuotedStr(ADate);
+
+    Close;
+    SQL.Text := sSql;
+    Prepared := True;
+    Open;
+
+    if not IsEmpty then
+    begin
+      sSeq := FieldByName('max_user_seq').AsString;
+      if sSeq = '' then
+        nSeq := 0
+      else
+        nSeq := StrToInt(copy(sSeq, 3, 4));
       Result := nSeq;
     end;
 

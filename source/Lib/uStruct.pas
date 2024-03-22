@@ -147,8 +147,8 @@ type
     StartDatetime: String;
     EndDatetime: String;
 
-    TotalGameCnt: Integer;
-    TotalGameMin: Integer;
+    //TotalGameCnt: Integer;
+    //TotalGameMin: Integer;
     ReserveDate: String; //예약시간
     ExpectdEndDate: String; //예상종료시간
 

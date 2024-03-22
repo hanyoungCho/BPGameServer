@@ -57,7 +57,8 @@ type
     function SendPinSettingNo(ALaneNo, ASetType: String): Boolean;
     function SendBowlerPause(ALaneNo, ABowlerSeq: Integer; APauseYn: String): Boolean;
     function SendInitLane(ALaneNo: String): Boolean; // 마지막 명령 확인필요
-    function SendLaneTemp(ALaneNo: String): Boolean; // 명령어 확인 필요???
+    //function SendLaneTemp(ALaneNo: String): Boolean; // 명령어 확인 필요??? -> 제어 제외 2024-03-11
+    function SendLaneStatus(ALaneNo: Integer): Boolean; // 초기화 명령 후 레인 상태 요청
     function SendGameCancel(ALaneNo: String): Boolean; // 레인 게임취소 (?? 레인초기화와 다른 명령? 확인필요) - 게이머 빼기 언제사용???
 
     function SendLaneAssign(ALaneNo: Integer): Boolean; //배정
@@ -67,7 +68,7 @@ type
     function SendLaneCompetitionBowlerAddTemp(ALaneNo, ABowlerCnt: Integer): Boolean; //테스트용 나중에 삭제
 
     function SendLaneAssignBowlerAdd(ALaneNo, ABowlerSeq: Integer): Boolean;
-    function SendLaneAssignBowlerFin(ALaneNo: Integer): Boolean; //게이머정보 등록/수정후 명령?
+    //function SendLaneAssignBowlerFin(ALaneNo: Integer): Boolean; //게이머정보 등록/수정후 명령?  > 제어제외 2024-03-11
     function SendLaneAssignBowlerDel(ALaneNo, ABowlerSeq: Integer): Boolean; //사용자 제거? -> 이름 초기화??
 
     function SendLaneAssignBowlerGameCnt(ALaneNo, ABowlerSeq, AGameCnt: Integer): Boolean; //게임수 지정
@@ -808,7 +809,7 @@ begin
 
 end;
 
-
+{
 function TComThread.SendLaneTemp(ALaneNo: String): Boolean;
 var
   nCrc: Byte;
@@ -844,6 +845,48 @@ begin
 
   FCmdSendBufArr[FLastIdx].nCnt := 18;
   FCmdSendBufArr[FLastIdx].sType := '???';
+
+  inc(FLastIdx);
+  if FLastIdx > BUFFER_SIZE then
+    FLastIdx := 0;
+end;
+}
+function TComThread.SendLaneStatus(ALaneNo: Integer): Boolean;
+var
+  nCrc: Byte;
+begin
+
+  // 0D 50 6F 73 43 6F 6D 6D 61 6E 64 0D 01 0B 00 02 05 FA (???)
+  FillChar(FCmdSendBufArr[FLastIdx], SizeOf(FCmdSendBufArr[FLastIdx]), 0);
+
+  FCmdSendBufArr[FLastIdx].nDataArr[0] := $0D;
+  FCmdSendBufArr[FLastIdx].nDataArr[1] := $50; // PosCommand (String)
+  FCmdSendBufArr[FLastIdx].nDataArr[2] := $6F;
+  FCmdSendBufArr[FLastIdx].nDataArr[3] := $73;
+  FCmdSendBufArr[FLastIdx].nDataArr[4] := $43;
+  FCmdSendBufArr[FLastIdx].nDataArr[5] := $6F;
+  FCmdSendBufArr[FLastIdx].nDataArr[6] := $6D;
+  FCmdSendBufArr[FLastIdx].nDataArr[7] := $6D;
+  FCmdSendBufArr[FLastIdx].nDataArr[8] := $61;
+  FCmdSendBufArr[FLastIdx].nDataArr[9] := $6E;
+  FCmdSendBufArr[FLastIdx].nDataArr[10] := $64;
+  FCmdSendBufArr[FLastIdx].nDataArr[11] := $0D;
+
+  FCmdSendBufArr[FLastIdx].nDataArr[12] := $80 + ALaneNo;
+
+  FCmdSendBufArr[FLastIdx].nDataArr[13] := $16;
+
+  FCmdSendBufArr[FLastIdx].nDataArr[14] := $00; // Data Length
+  FCmdSendBufArr[FLastIdx].nDataArr[15] := $03;
+
+  FCmdSendBufArr[FLastIdx].nDataArr[16] := ALaneNo;
+  FCmdSendBufArr[FLastIdx].nDataArr[17] := $16;
+
+  nCrc := GetCRC(FLastIdx, 16, 17);
+  FCmdSendBufArr[FLastIdx].nDataArr[18] := nCrc;
+
+  FCmdSendBufArr[FLastIdx].nCnt := 19;
+  FCmdSendBufArr[FLastIdx].sType := 'Status';
 
   inc(FLastIdx);
   if FLastIdx > BUFFER_SIZE then
@@ -947,7 +990,7 @@ begin
   //SendLaneAssignCtl(ALaneNo); //배정명령
   SendLaneAssignGameLeagueOpen(ALaneNo); // 오픈게임
   SendLaneAssignBowlerAdd(ALaneNo, 0); //볼러 추가
-  SendLaneAssignBowlerFin(ALaneNo); //추가 완료?
+  //SendLaneAssignBowlerFin(ALaneNo); //추가 완료?
   SendPinSetterOnOff(ALaneNo, 'Y'); //핀세터 겨키
 end;
 
@@ -1001,7 +1044,6 @@ begin
       SendLaneAssignGameLeague(ALaneNo, 'Y'); //리그게임
   end;
 
-  //chy test
   if ATrainMin > 0 then
   begin
     SendLaneAssignGameTraining(ALaneNo, ATrainMin); //연습게임
@@ -1009,7 +1051,7 @@ begin
   end;
 
   SendLaneAssignBowlerAdd(ALaneNo, 0); //볼러 추가
-  SendLaneAssignBowlerFin(ALaneNo); //추가 완료?
+  //SendLaneAssignBowlerFin(ALaneNo); //추가 완료?
   SendLaneAssignGameBowlerHandy(ALaneNo); //핸디-0:초기화, 1~255까지
   SendPinSetterOnOff(ALaneNo, 'Y'); //핀세터 겨키
 end;
@@ -1492,7 +1534,7 @@ begin
     FLastIdx := 0;
 
 end;
-
+{
 function TComThread.SendLaneAssignBowlerFin(ALaneNo: Integer): Boolean;
 var
   nCrc: Byte;
@@ -1537,7 +1579,7 @@ begin
     FLastIdx := 0;
 
 end;
-
+}
 function TComThread.SendLaneAssignBowlerDel(ALaneNo, ABowlerSeq: Integer): Boolean;
 var
   nCrc, nTemp: Byte;
@@ -2210,7 +2252,7 @@ begin
   FCmdSendBufArr[FLastIdx].nDataArr[19] := nCrc;
 
   FCmdSendBufArr[FLastIdx].nCnt := 20;
-  FCmdSendBufArr[FLastIdx].sType := '연습게임완료';
+  FCmdSendBufArr[FLastIdx].sType := '연습게임지정';
 
   inc(FLastIdx);
   if FLastIdx > BUFFER_SIZE then
@@ -2675,11 +2717,9 @@ begin
     sNm := rGame.BowlerList[nBowler + 1].BowlerNm;
 
     if Assign.BowlerList[nBowler + 1].ShoesYn = 'Y' then
-      //sNm := sNm + ' 11'
-      sNm := sNm + ' 1'
+      sNm := sNm + ' 1' //sNm := sNm + ' 11'
     else
-      //sNm := sNm + ' 01';
-      sNm := sNm + ' 0';
+      sNm := sNm + ' 0'; //sNm := sNm + ' 01';
 
     sNm := sNm + Copy(Assign.BowlerList[nBowler + 1].FeeDiv, 2, 1);
 
@@ -2715,18 +2755,14 @@ begin
     begin
       // 11:X 12:/ 13:-
       if rGame.BowlerList[nBowler + 1].FramePin[I] = 'X' then
-        //nByteTm := $8A
         nByteTm := $0A
       else if rGame.BowlerList[nBowler + 1].FramePin[I] = '/' then
-        //nByteTm := $8B
         nByteTm := $0B
       else if rGame.BowlerList[nBowler + 1].FramePin[I] = '-' then
-        //nByteTm := $8C
         nByteTm := $0C
       else if rGame.BowlerList[nBowler + 1].FramePin[I] = '' then
         nByteTm := $00
       else
-        //nByteTm := StrToInt('$8' + Assign.BowlerList[nBowler + 1].FramePin[I]);
         nByteTm := StrToInt(rGame.BowlerList[nBowler + 1].FramePin[I]);
 
       FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx + I] := nByteTm;
@@ -2742,19 +2778,15 @@ begin
         nMod := nScore mod 256;
 
         nBowlerIdx := nBowlerIdx + 1;
-        //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nDiv;
         FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nMod;
         nBowlerIdx := nBowlerIdx + 1;
-        //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nMod;
         FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nDiv;
       end
       else
       begin
         nBowlerIdx := nBowlerIdx + 1;
-        //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := 0;
         FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nScore;
         nBowlerIdx := nBowlerIdx + 1;
-        //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nScore;
         FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := 0;
       end;
     end;
@@ -2766,19 +2798,15 @@ begin
       nMod := nScore mod 256;
 
       nBowlerIdx := nBowlerIdx + 1;
-      //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nDiv;
       FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nMod;
       nBowlerIdx := nBowlerIdx + 1;
-      //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nMod;
       FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nDiv;
     end
     else
     begin
       nBowlerIdx := nBowlerIdx + 1;
-      //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := 0;
       FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nScore;
       nBowlerIdx := nBowlerIdx + 1;
-      //FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := nScore;
       FCmdSendBufArr[FLastIdx].nDataArr[nBowlerIdx] := 0;
     end;
     nBowlerIdx := nBowlerIdx + 1;
@@ -3255,6 +3283,14 @@ begin
 
         FComPort.Write(FCmdSendBufArr[FCurIdx].nDataArr, FCmdSendBufArr[FCurIdx].nCnt);
 
+        if FCmdSendBufArr[FCurIdx].sType = 'Status' then
+        begin
+          FLastExeCommand := COM_MON;
+          FillChar(FCmdRecvBufArr, SizeOf(FCmdRecvBufArr), 0);
+          FRecvLen := 0;
+          FRecvS := 0 ;
+        end;
+
         sSendData := '';
         for i := 0 to FCmdSendBufArr[FCurIdx].nCnt - 1 do
         begin
@@ -3265,6 +3301,16 @@ begin
         end;
         sLogMsg := 'SendData : FCurIdx ' + IntToStr(FCurIdx) + ' / ' + FCmdSendBufArr[FCurIdx].sType + ' / ' + sSendData;
         Global.Log.LogComWrite(sLogMsg);
+
+        if FCmdSendBufArr[FCurIdx].sType = 'Status' then
+        begin
+          if FLastIdx <> FCurIdx then
+          begin
+            inc(FCurIdx); //다음 제어 데이타로 이동
+            if FCurIdx > BUFFER_SIZE then
+              FCurIdx := 0;
+          end;
+        end;
 
         FWriteTm := now + (((1/24)/60)/60) * 1;
       end;

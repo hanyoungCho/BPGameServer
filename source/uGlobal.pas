@@ -51,6 +51,9 @@ type
 
     FSendACSTeeboxError: TDateTime;
 
+    FLaneErp: Boolean; // 레인 쓰레드에서 erp 전송시
+    FServerErp: Boolean; // 로컬서버에서 erp 전송시
+
     procedure CheckConfig;
     procedure ReadConfig;
   public
@@ -102,6 +105,9 @@ type
     //property DBWrite: Boolean read FDBWrite write FDBWrite;
 
     property SendACSTeeboxError: TDateTime read FSendACSTeeboxError write FSendACSTeeboxError;
+
+    property LaneErp: Boolean read FLaneErp write FLaneErp;
+    property ServerErp: Boolean read FServerErp write FServerErp;
   end;
 
 var
@@ -143,6 +149,8 @@ begin
   FTeeboxControlChk := 0;
   FDBWrite := False;
 
+  FLaneErp := False;
+  FServerErp := False;
 end;
 
 procedure TGlobal.CheckConfig;
@@ -520,6 +528,7 @@ begin
     if sTimeChk = '00' then //배정번호 초기화
     begin
       TcpServer.UseSeqNo := 0;
+      TcpServer.UseSeqUser := 0;
       TcpServer.CommonSeqNo := 0;
       //TcpServer.LastUseSeqNo := TcpServer.UseSeqNo;
       TcpServer.UseSeqDate := FormatDateTime('YYYYMMDD', Now);

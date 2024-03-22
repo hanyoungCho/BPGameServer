@@ -26,8 +26,8 @@ type
     FLaneCnt: Integer;
     //FAssignInfoList: array of TAssignInfo;
 
-    FLaneStatusUse: Boolean;
-    FLaneReserveUse: Boolean;
+    //FLaneStatusUse: Boolean;
+    //FLaneReserveUse: Boolean;
 
     FSendApiList: TStringList;
 
@@ -62,7 +62,7 @@ type
 
     procedure SetLaneGameStatus(AGameStatus: TGameStatus); //응답데이타
 
-    procedure RegAssignEpr(AAssignNo, AApi, AJson: String);
+    procedure RegAssignEpr(AAssignNo, AApi, AJson: String); // erp 등록용 데이터 생성
     procedure LaneReserveErp;
     procedure LaneGameScoreErp(ALaneIdx, ABowlerIdx: Integer);
 
@@ -121,11 +121,17 @@ type
 
     function ChgBowlerScore(AAssignNo, ABowlerId, AFrame: String): String;
 
+    function ChkBowlerNm(ABowlerNm: String): String;
+
     procedure SetLaneErrorCnt(ALaneNo: Integer; AError: String; AMaxCnt: Integer);
 
+    //procedure ChgAssignBowlerList();
+    procedure ChgGameBowlerList(APLaneIdx, APBIdx, AGLaneIdx, AGBIdx: Integer); // 변경할 lane, 볼러idx , data 가져올 lane, 볼러idx
+    procedure SetExpectdEndDate(ALIdx: Integer);
+
     property LaneCnt: Integer read FLaneCnt write FLaneCnt;
-    property LaneStatusUse: Boolean read FLaneStatusUse write FLaneStatusUse;
-    property LaneReserveUse: Boolean read FLaneReserveUse write FLaneReserveUse;
+    //property LaneStatusUse: Boolean read FLaneStatusUse write FLaneStatusUse;
+    //property LaneReserveUse: Boolean read FLaneReserveUse write FLaneReserveUse;
   end;
 
 implementation
@@ -139,8 +145,8 @@ constructor TLane.Create;
 begin
   FLaneCnt := 0;
 
-  FLaneStatusUse := False;
-  FLaneReserveUse := False;
+  //FLaneStatusUse := False;
+  //FLaneReserveUse := False;
 end;
 
 destructor TLane.Destroy;
@@ -218,7 +224,7 @@ begin
     //제어
     Global.Com.SendInitLane(IntToStr(FLaneList[nIdx].LaneNo));
     Global.Com.SendPinSetterOnOff(FLaneList[nIdx].LaneNo, 'N');
-    Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
+    //Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
 
     sStr := '배정초기화 : ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / ' + FLaneList[nIdx].Assign.AssignNo;
     Global.Log.LogReserveWrite(sStr);
@@ -489,6 +495,7 @@ begin
   FreeAndNil(rReserveListDB);
 
   Global.TcpServer.UseSeqNo := Global.DM.SelectAssignLastSeq(FormatDateTime('YYYYMMDD', Now));
+  Global.TcpServer.UseSeqUser := Global.DM.SelectAssignLastUserSeq(FormatDateTime('YYYYMMDD', Now));
   Global.TcpServer.UseSeqDate := FormatDateTime('YYYYMMDD', Now);
 
 end;
@@ -876,7 +883,7 @@ var
   bResult, bCompetitionEnd, bInit: Boolean;
   nCompetitionIdx: Integer;
 begin
-  result := 'fail';
+  result := 'Fail';
 
   if AType = 0 then // 레인초기화 명령시
   begin
@@ -901,7 +908,7 @@ begin
         sLog := 'DB 배정취소 - AssignNo: ' + AAssignNo + ' / ' + sResult;
         Global.Log.LogReserveWrite(sLog);
 
-        if sResult <> 'success' then
+        if sResult <> 'Success' then
         begin
           result := sResult;
           Exit;
@@ -909,7 +916,7 @@ begin
 
       end;
 
-      Result := 'success';
+      Result := 'Success';
       Exit;
     end;
   end;
@@ -926,7 +933,8 @@ begin
   //제어
   Global.Com.SendInitLane(IntToStr(FLaneList[nIdx].LaneNo));
   Global.Com.SendPinSetterOnOff(FLaneList[nIdx].LaneNo, 'N');
-  Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
+  //Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
+  //Global.Com.SendLaneStatus(FLaneList[nIdx].LaneNo);
 
   jSendObj := TJSONObject.Create;
   jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
@@ -950,13 +958,13 @@ begin
     ChkCompetition(nCompetitionSeq);
   end;
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.SetLaneAssignCheckOut(AAssignNo, AUserId: String): String;
 var
   nIdx, nCompetitionSeq, i: Integer;
-  sLog, sResult: String;
+  sLog: String;
 
   jSend, jSendItem: TJSONObject;
   jSendArr: TJsonArray;
@@ -964,18 +972,18 @@ var
   bMember: Boolean;
   nGameCnt, nGameMin: Integer;
 
-  jErpRvObj, jSendObj: TJSONObject;
-  sErpRvResultCd, sErpRvResultMsg: String;
+  jRecv: TJSONObject;
+  sRecvResult, sRecvResultCd, sRecvResultMsg: String;
 
-  jRecvObj, jRecvObjItem: TJSONObject;
-  jRecvObjArr: TJSONArray;
+  jTemp, jTempItem: TJSONObject;
+  jTempArr: TJSONArray;
 begin
   result := '';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
   begin
-    Result := '{"result_cd":"GS99", "result_msg":"현재 진행중인 배정이 없습니다"}';
+    Result := '현재 진행중인 배정이 없습니다';
     Exit;
   end;
 
@@ -1015,7 +1023,6 @@ begin
 
         if FLaneList[nIdx].Assign.GameDiv = 1 then
         begin
-          //chy test
           jSendItem.AddPair( TJSONPair.Create( 'frame', FLaneList[nIdx].Game.BowlerList[i].FrameTo) );
           jSendItem.AddPair( TJSONPair.Create( 'membership_seq', FLaneList[nIdx].Assign.BowlerList[i].MembershipSeq) );
           jSendItem.AddPair( TJSONPair.Create( 'membership_use_cnt', FLaneList[nIdx].Assign.BowlerList[i].GameFin) );
@@ -1038,36 +1045,20 @@ begin
       Global.Log.LogErpApiWrite(sLog);
 
       //Erp 전문전송- 레인베정정보 등록
-      sResult := Global.Api.SetErpApiJsonData(jSend.ToString, 'E106_checkoutBowlerLangAssign', Global.Config.ApiUrl, Global.Config.Token);
+      sRecvResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E106_checkoutBowlerLangAssign', Global.Config.ApiUrl, Global.Config.Token);
 
-      sLog := 'E106_checkoutBowlerLangAssign : ' + sResult;
+      sLog := 'E106_checkoutBowlerLangAssign : ' + sRecvResult;
       Global.Log.LogErpApiWrite(sLog);
 
-      if (Copy(sResult, 1, 1) <> '{') or (Copy(sResult, Length(sResult), 1) <> '}') then
+      if sRecvResult <> 'Success' then
       begin
         sLog := jSend.ToString;
         Global.Log.LogErpApiWrite(sLog);
 
-        Result := '{"result_cd":"GS02","result_msg":"' + sResult + '"}';
-
-        Global.Lane.LaneReserveUse := False;
+        Result := sRecvResult;
         Exit;
       end;
 
-      jErpRvObj := TJSONObject.ParseJSONValue(sResult) as TJSONObject;
-      sErpRvResultCd := jErpRvObj.GetValue('result_cd').Value;
-      sErpRvResultMsg := jErpRvObj.GetValue('result_msg').Value;
-
-      if sErpRvResultCd <> '0000' then
-      begin
-        Result := '{"result_cd":"' + sErpRvResultCd + '",' +
-                   '"result_msg":"' + sErpRvResultMsg + '"}';
-
-        FreeAndNil(jErpRvObj);
-        Exit;
-      end;
-
-      FreeAndNil(jErpRvObj);
     finally
       FreeAndNil(jSend);
     end;
@@ -1096,21 +1087,21 @@ begin
   //제어
   Global.Com.SendInitLane(IntToStr(FLaneList[nIdx].LaneNo));
   Global.Com.SendPinSetterOnOff(FLaneList[nIdx].LaneNo, 'N');
-  Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
+  //Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
 
   //ERP 전송용
   try
-    jSendObj := TJSONObject.Create;
-    jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-    jSendObj.AddPair(TJSONPair.Create('assign_no', FLaneList[nIdx].Assign.AssignNo));
-    jSendObj.AddPair(TJSONPair.Create('lane_no', FLaneList[nIdx].Assign.LaneNo));
-    jSendObj.AddPair(TJSONPair.Create('assign_status', '2'));
-    jSendObj.AddPair(TJSONPair.Create('status_datetime', FormatDateTime('YYYY-MM-DD hh:nn:ss', now)));
-    jSendObj.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
+    jTemp := TJSONObject.Create;
+    jTemp.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+    jTemp.AddPair(TJSONPair.Create('assign_no', FLaneList[nIdx].Assign.AssignNo));
+    jTemp.AddPair(TJSONPair.Create('lane_no', FLaneList[nIdx].Assign.LaneNo));
+    jTemp.AddPair(TJSONPair.Create('assign_status', '2'));
+    jTemp.AddPair(TJSONPair.Create('status_datetime', FormatDateTime('YYYY-MM-DD hh:nn:ss', now)));
+    jTemp.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
 
-    RegAssignEpr(FLaneList[nIdx].Assign.AssignNo, 'E002_chgLaneAssign', jSendObj.ToString);
+    RegAssignEpr(FLaneList[nIdx].Assign.AssignNo, 'E002_chgLaneAssign', jTemp.ToString);
   finally
-    FreeAndNil(jSendObj);
+    FreeAndNil(jTemp);
   end;
 
   if FLaneList[nIdx].Assign.CompetitionSeq > 0 then //취소되는 게임이 대회이면
@@ -1123,24 +1114,24 @@ begin
 
   //응답 전문
   try
-    jRecvObjArr := TJSONArray.Create;
-    jRecvObj := TJSONObject.Create;
-    jRecvObj.AddPair(TJSONPair.Create('result_cd', '0000'));
-    jRecvObj.AddPair(TJSONPair.Create('result_msg', 'Success'));
-    jRecvObj.AddPair(TJSONPair.Create('result_data', jRecvObjArr));
+    jTempArr := TJSONArray.Create;
+    jTemp := TJSONObject.Create;
+    jTemp.AddPair(TJSONPair.Create('result_cd', '0000'));
+    jTemp.AddPair(TJSONPair.Create('result_msg', 'Success'));
+    jTemp.AddPair(TJSONPair.Create('result_data', jTempArr));
 
     for i := 1 to FLaneList[nIdx].Assign.BowlerCnt do
     begin
-      jRecvObjItem := TJSONObject.Create;
-      jRecvObjItem.AddPair( TJSONPair.Create( 'assign_no', FLaneList[nIdx].Assign.AssignNo) );
-      jRecvObjItem.AddPair( TJSONPair.Create( 'bowler_seq', FLaneList[nIdx].Assign.BowlerList[i].BowlerSeq) );
-      jRecvObjItem.AddPair( TJSONPair.Create( 'bowler_id', FLaneList[nIdx].Assign.BowlerList[i].BowlerId) );
-      jRecvObjItem.AddPair( TJSONPair.Create( 'payment_type', FLaneList[nIdx].Assign.BowlerList[i].PaymentType) );
+      jTempItem := TJSONObject.Create;
+      jTempItem.AddPair( TJSONPair.Create( 'assign_no', FLaneList[nIdx].Assign.AssignNo) );
+      jTempItem.AddPair( TJSONPair.Create( 'bowler_seq', FLaneList[nIdx].Assign.BowlerList[i].BowlerSeq) );
+      jTempItem.AddPair( TJSONPair.Create( 'bowler_id', FLaneList[nIdx].Assign.BowlerList[i].BowlerId) );
+      jTempItem.AddPair( TJSONPair.Create( 'payment_type', FLaneList[nIdx].Assign.BowlerList[i].PaymentType) );
 
       if FLaneList[nIdx].Assign.BowlerList[i].PaymentType = 1 then  //0:후불, 1:선불
       begin
-        jRecvObjItem.AddPair( TJSONPair.Create( 'game_cnt', 0) );
-        jRecvObjItem.AddPair( TJSONPair.Create( 'game_min', 0) );
+        jTempItem.AddPair( TJSONPair.Create( 'game_cnt', 0) );
+        jTempItem.AddPair( TJSONPair.Create( 'game_min', 0) );
       end
       else
       begin
@@ -1158,23 +1149,23 @@ begin
                                               FLaneList[nIdx].Assign.BowlerList[i].BowlerSeq, FLaneList[nIdx].Assign.BowlerList[i].GameFin);
           end;
 
-          jRecvObjItem.AddPair( TJSONPair.Create( 'game_cnt', nGameCnt) );
-          jRecvObjItem.AddPair( TJSONPair.Create( 'game_min', 0) );
+          jTempItem.AddPair( TJSONPair.Create( 'game_cnt', nGameCnt) );
+          jTempItem.AddPair( TJSONPair.Create( 'game_min', 0) );
         end
         else
         begin
           nGameMin := FLaneList[nIdx].Assign.BowlerList[i].GameMin - FLaneList[nIdx].Game.BowlerList[i].ResidualGameTime;
-          jRecvObjItem.AddPair( TJSONPair.Create( 'game_cnt', 0) );
-          jRecvObjItem.AddPair( TJSONPair.Create( 'game_min', nGameMin) );
+          jTempItem.AddPair( TJSONPair.Create( 'game_cnt', 0) );
+          jTempItem.AddPair( TJSONPair.Create( 'game_min', nGameMin) );
         end;
       end;
 
-      jRecvObjArr.Add(jRecvObjItem);
+      jTempArr.Add(jTempItem);
     end;
 
-    Result := jRecvObj.ToString;
+    Result := jTemp.ToString;
   finally
-    FreeAndNil(jRecvObj);
+    FreeAndNil(jTemp);
   end;
 
 end;
@@ -1451,17 +1442,19 @@ begin
 
     if FLaneList[nIdx].Assign.AssignNo = '' then
     begin
+      { 보류 2024-02-20 게임취소시 데이타 처리 시간으로 인해 상태 갱신 요청을 할수가 없음. 이로인해 무한 명령 발생.
       if (FLaneList[nIdx].GameCom.Status = 'A8') or (FLaneList[nIdx].GameCom.Status = 'A0') then //버전이 다른경우 있음
       begin
         //제어
         Global.Com.SendInitLane(IntToStr(FLaneList[nIdx].LaneNo));
         Global.Com.SendPinSetterOnOff(FLaneList[nIdx].LaneNo, 'N');
         Global.Com.SendLaneTemp(IntToStr(FLaneList[nIdx].LaneNo));
+        //Global.Com.SendLaneStatus(FLaneList[nIdx].LaneNo);
 
         sStr := '미배정 게임 종료 : ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / ' + FLaneList[nIdx].LaneNm;
         Global.Log.LogReserveWrite(sStr);
       end;
-
+      }
       Continue;
     end;
 
@@ -1553,6 +1546,8 @@ begin
                   Continue;
               end;
 
+              sStr := 'League Next: ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / Nm: ' + FLaneList[nIdx].LaneNm + ' - 짝수레인: 빈레인';
+              Global.Log.LogReserveWrite(sStr);
               Global.Com.SendLaneGameNext(FLaneList[nIdx].LaneNo, FLaneList[nIdx].Assign.LeagueYn);
             end;
           end
@@ -1566,6 +1561,8 @@ begin
                   Continue;
               end;
 
+              sStr := 'League Next: ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / Nm: ' + FLaneList[nIdx].LaneNm + ' - 홀수레인: 빈레인';
+              Global.Log.LogReserveWrite(sStr);
               Global.Com.SendLaneGameNext(FLaneList[nIdx - 1].LaneNo, FLaneList[nIdx].Assign.LeagueYn);
             end
             else
@@ -1576,7 +1573,12 @@ begin
                   Continue;
               end;
 
-              Global.Com.SendLaneGameNext(FLaneList[nIdx - 1].LaneNo, FLaneList[nIdx].Assign.LeagueYn);
+              if (FLaneList[nIdx - 1].GameCom.Status = '88') then
+              begin
+                sStr := 'League Next: ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / Nm: ' + FLaneList[nIdx].LaneNm + ' - 홀수레인: 종료';
+                Global.Log.LogReserveWrite(sStr);
+                Global.Com.SendLaneGameNext(FLaneList[nIdx - 1].LaneNo, FLaneList[nIdx].Assign.LeagueYn);
+              end;
             end;
           end;
 
@@ -1588,7 +1590,7 @@ begin
             if LaneStatusChk_tm_end_check(nIdx) = True then
               Continue;
           end;
-
+          { 상태변경 제외처리 2024-03-11
           //종료가 아니면
           // Status1 상태값 - 홀수레인:C0=지금 투할 게이머, 80=대기, 00=종료, 02 = 일시정지(강제) / 짝수레인: E0=투할사람 A0=대기사람, 20=종료, 22 = 일시정지(강제)
           // Status3 상태값 - 게임볼러 완료 - 후불: $00 -> $80 / 선불: $20 -> $A0 -> 변경처리
@@ -1615,6 +1617,7 @@ begin
             Continue;
 
           //모든 사용자 A0 전송(선불), 80 일반 ->  상태 요청해서 모두 A0 확인 후  next
+          }
           Global.Com.SendLaneGameNext(FLaneList[nIdx].LaneNo, FLaneList[nIdx].Assign.LeagueYn);
           sStr := '88 Next - No: ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / Nm: ' + FLaneList[nIdx].LaneNm + ' / ' + FLaneList[nIdx].Assign.AssignNo + ' -> ' + IntToStr(FLaneList[nIdx].Assign.GameSeq);
           Global.Log.LogReserveWrite(sStr);
@@ -1739,7 +1742,6 @@ var
 begin
   Result := False;
 
-  //chy test
   //동시제어
   if FLaneList[AIdx].Assign.CommonCtl > 0 then
   begin
@@ -1984,7 +1986,7 @@ begin
   //제어
   Global.Com.SendInitLane(IntToStr(FLaneList[AIdx].LaneNo));
   Global.Com.SendPinSetterOnOff(FLaneList[AIdx].LaneNo, 'N');
-  Global.Com.SendLaneTemp(IntToStr(FLaneList[AIdx].LaneNo));
+  //Global.Com.SendLaneTemp(IntToStr(FLaneList[AIdx].LaneNo));
 
   jSendObj := TJSONObject.Create;
   jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
@@ -2006,6 +2008,15 @@ var
   bChg: Boolean;
   I: Integer;
 begin
+
+  if FLaneList[AIdx].GameCom.Receive = False then //데이터 미응답
+    Exit;
+
+  if (FLaneList[AIdx].Assign.BowlerCnt <> FLaneList[AIdx].GameCom.BowlerCnt) then
+  begin
+    //global.Log.LogReserveWrite(FLaneList[AIdx].LaneNm + ': ' + IntToStr(FLaneList[AIdx].Assign.BowlerCnt) + ' <> ' + IntToStr(FLaneList[AIdx].GameCom.BowlerCnt));
+    Exit;
+  end;
 
   FLaneList[AIdx].Game.Status := FLaneList[AIdx].GameCom.Status;
   FLaneList[AIdx].Game.BowlerCnt := FLaneList[AIdx].GameCom.BowlerCnt;
@@ -2073,6 +2084,9 @@ begin
 
   end;
 
+  //global.Log.LogReserveWrite(FLaneList[AIdx].LaneNm + ': game change');
+
+  FLaneList[AIdx].GameCom.Receive := False; //데이터 미응답 - 대기상태
 end;
 
 procedure TLane.LaneStatusChk_tm_Competition;
@@ -2231,16 +2245,15 @@ begin
                 bResult := Global.DM.UpdateAssignLane(FLaneList[nIdx].Assign.AssignDt, FLaneList[nIdx].Assign.AssignSeq, FLaneList[nIdx].Assign.LaneNo);
                 Global.Log.LogReserveWrite(sStr);
 
-                //Global.Com.SendLaneAssignBowlerAdd(FLaneList[nIdx].LaneNo, 0); //볼러 추가
-
+                //chy test - 볼러정보 변경 이동방식으로 적용 - 보류
+                //Global.Com.SendLaneAssignMove(FLaneList[nIdx].LaneNo, FLaneList[nIdx].LaneNo);
                 if nCompetitionBCnt < FLaneList[nIdx].Assign.BowlerCnt then
                   Global.Com.SendLaneCompetitionBowlerAdd(FLaneList[nIdx].LaneNo, FLaneList[nIdx].Assign.BowlerCnt)
                 else
                   Global.Com.SendLaneCompetitionBowlerAdd(FLaneList[nIdx].LaneNo, nCompetitionBCnt); //볼러 추가
 
-                Global.Com.SendLaneAssignBowlerFin(FLaneList[nIdx].LaneNo); //추가 완료?
+                //Global.Com.SendLaneAssignBowlerFin(FLaneList[nIdx].LaneNo); //추가 완료?
 
-                //chy test - 핸디 반영 수정 필요
                 for j := 1 to FLaneList[nIdx].Assign.BowlerCnt do
                 begin
                   Global.Com.SendLaneAssignGameHandy(FLaneList[nIdx].LaneNo, j, FLaneList[nIdx].Assign.BowlerList[j].Handy);
@@ -2554,6 +2567,9 @@ begin
   jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
   jSendObj.AddPair(TJSONPair.Create('assign_no', FLaneList[ALaneIdx].Assign.AssignNo));
   jSendObj.AddPair(TJSONPair.Create('bowler_seq', FLaneList[ALaneIdx].Assign.BowlerList[ABowlerIdx].BowlerSeq));
+  jSendObj.AddPair(TJSONPair.Create('bowler_id', FLaneList[ALaneIdx].Assign.BowlerList[ABowlerIdx].BowlerId));
+  jSendObj.AddPair(TJSONPair.Create('bowler_nm', FLaneList[ALaneIdx].Assign.BowlerList[ABowlerIdx].BowlerNm));
+  jSendObj.AddPair(TJSONPair.Create('member_no', FLaneList[ALaneIdx].Assign.BowlerList[ABowlerIdx].MemberNo));
   jSendObj.AddPair(TJSONPair.Create('game_seq', FLaneList[ALaneIdx].Assign.GameSeq));
   jSendObj.AddPair(TJSONPair.Create('participants_seq', FLaneList[ALaneIdx].Assign.BowlerList[ABowlerIdx].ParticipantsSeq));
   jSendObj.AddPair(TJSONPair.Create('score_data', sFrame));
@@ -2586,6 +2602,8 @@ begin
 
     if nIdx = -1 then
       Exit;
+
+    FLaneList[nIdx].GameCom.Receive := True; //데이터 응답받음
 
     FLaneList[nIdx].GameCom.Status := AGameStatus.Status;
     FLaneList[nIdx].GameCom.BowlerCnt := AGameStatus.BowlerCnt;
@@ -2713,7 +2731,7 @@ var
   nIdx1, nIdx2, nLaneNo: Integer;
   nResult: Integer;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -2758,6 +2776,9 @@ begin
   end;
   }
 
+  if ABowlerInfoTM.BowlerNm = '' then
+    ABowlerInfoTM.BowlerNm := ChkBowlerNm(copy(AAssignNo, 11, 2));
+
   //Erp 전송-가능여부 체크
   try
 
@@ -2783,32 +2804,20 @@ begin
     Global.Log.LogErpApiWrite(sLog);
 
     //Erp 전문전송- 레인베정정보 등록
-    sResult := Global.Api.SetErpApiJsonData(jSend.ToString, 'E101_regBowler', Global.Config.ApiUrl, Global.Config.Token);
+    sResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E101_regBowler', Global.Config.ApiUrl, Global.Config.Token);
 
     sLog := 'E101_regBowler : ' + sResult;
     Global.Log.LogErpApiWrite(sLog);
 
-    if (Copy(sResult, 1, 1) <> '{') or (Copy(sResult, Length(sResult), 1) <> '}') then
+    if sResult <> 'Success' then
     begin
       sLog := jSend.ToString;
       Global.Log.LogErpApiWrite(sLog);
 
-      Result := '볼러정보를 서버에 등록중 장애가 발생하였습니다.';
+      Result := sResult;
       Exit;
     end;
 
-    jErpRvObj := TJSONObject.ParseJSONValue(sResult) as TJSONObject;
-    sErpRvResultCd := jErpRvObj.GetValue('result_cd').Value;
-    sErpRvResultMsg := jErpRvObj.GetValue('result_msg').Value;
-
-    if sErpRvResultCd <> '0000' then
-    begin
-      Result := '[' + sErpRvResultCd + '] ' + sErpRvResultMsg;
-      FreeAndNil(jErpRvObj);
-      Exit;
-    end;
-
-    FreeAndNil(jErpRvObj);
   finally
     FreeAndNil(jSend);
   end;
@@ -2817,7 +2826,7 @@ begin
   begin
     //예약목록 확인
     bResult := Global.DM.InsertAssignBowler(nLaneNo, AAssignNo, ABowlerInfoTM);
-    Result := 'success';
+    Result := 'Success';
     Exit;
   end;
 
@@ -2843,6 +2852,8 @@ begin
   //DB저장
   bResult := Global.DM.InsertAssignBowler(FLaneList[nIdx].LaneNo, AAssignNo, ABowlerInfoTM);
 
+  SetExpectdEndDate(nIdx); //예상종료시간 계산
+
   //제어
   Global.Com.SendLaneAssignBowlerAdd(FLaneList[nIdx].LaneNo, ABowlerInfoTM.BowlerSeq);
 
@@ -2864,7 +2875,7 @@ begin
     end;
   end;
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.SetAssignNext(ALaneNo: Integer): Boolean;
@@ -2895,7 +2906,7 @@ var
 
   bBowlerNm, bGameCnt, bGameMin: Boolean;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   bErp := True;
   nIdx := GetAssignNoIndex(AAssignNo);
@@ -2959,32 +2970,20 @@ begin
       sLog := 'E102_chgBowler : ' + jSend.ToString;
       Global.Log.LogErpApiWrite(sLog);
 
-      sResult := Global.Api.SetErpApiJsonData(jSend.ToString, 'E102_chgBowler', Global.Config.ApiUrl, Global.Config.Token);
+      sResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E102_chgBowler', Global.Config.ApiUrl, Global.Config.Token);
 
       sLog := 'E102_chgBowler : ' + sResult;
       Global.Log.LogErpApiWrite(sLog);
 
-      if (Copy(sResult, 1, 1) <> '{') or (Copy(sResult, Length(sResult), 1) <> '}') then
+      if sResult <> 'Success' then
       begin
         sLog := jSend.ToString;
         Global.Log.LogErpApiWrite(sLog);
 
-        Result := '볼러정보를 서버에 등록중 장애가 발생하였습니다.';
+        Result := sResult;
         Exit;
       end;
 
-      jErpRvObj := TJSONObject.ParseJSONValue(sResult) as TJSONObject;
-      sErpRvResultCd := jErpRvObj.GetValue('result_cd').Value;
-      sErpRvResultMsg := jErpRvObj.GetValue('result_msg').Value;
-
-      if sErpRvResultCd <> '0000' then
-      begin
-        Result := '[' + sErpRvResultCd + '] ' + sErpRvResultMsg;
-        FreeAndNil(jErpRvObj);
-        Exit;
-      end;
-
-      FreeAndNil(jErpRvObj);
     finally
       FreeAndNil(jSend);
     end;
@@ -2995,7 +2994,7 @@ begin
     //예약목록 확인
     bResult := Global.DM.UpdateAssignBowler(AAssignNo, ABowlerInfoTM);
 
-    Result := 'success';
+    Result := 'Success';
     Exit;
   end;
 
@@ -3031,6 +3030,8 @@ begin
   //DB저장
   bResult := Global.DM.UpdateAssignBowler(AAssignNo, ABowlerInfoTM);
 
+  SetExpectdEndDate(nIdx); //예상종료시간 계산
+
   //제어
   if bBowlerNm = True then
   begin
@@ -3048,15 +3049,21 @@ begin
     Global.Com.SendLaneAssignBowlerGameTime(FLaneList[nIdx].LaneNo, nBIdx, FLaneList[nIdx].Assign.BowlerList[nBIdx].GameMin);
   end;
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignMove(ALaneNo, ATargetLaneNo: String): String;
 var
   nIdx, nTIdx: Integer;
   rAssign: TAssignInfo;
+  sLog: String;
+
+  // erp 요청
+  jSend, jSendItem: TJSONObject;
+  jSendArr: TJsonArray;
+  sRecvResult: String;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetLaneInfoIndex(StrToInt(ALaneNo));
 
@@ -3074,6 +3081,33 @@ begin
     Exit;
   end;
 
+  try
+    jSend := TJSONObject.Create;
+    jSend.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+    jSend.AddPair(TJSONPair.Create('assign_no', FLaneList[nIdx].Assign.AssignNo));
+    jSend.AddPair(TJSONPair.Create('lane_no', ALaneNo));
+    jSend.AddPair(TJSONPair.Create('move_lane_no', ATargetLaneNo));
+    jSend.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
+
+    //Erp 전문전송
+    sRecvResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E004_moveLaneAssign', Global.Config.ApiUrl, Global.Config.Token);
+
+    sLog := 'E004_moveLaneAssign: ' + sRecvResult;
+    Global.Log.LogErpApiWrite(sLog);
+
+    if sRecvResult <> 'Success' then
+    begin
+      sLog := jSend.ToString;
+      Global.Log.LogErpApiWrite(sLog);
+
+      Result := sRecvResult;
+      Exit;
+    end;
+
+  finally
+    FreeAndNil(jSend);
+  end;
+
   FLaneList[nTIdx].Assign := FLaneList[nIdx].Assign;
 
   Global.DM.UpdateAssign(FLaneList[nTIdx].Assign.AssignDt, FLaneList[nTIdx].Assign.AssignSeq, StrToInt(ATargetLaneNo));
@@ -3089,9 +3123,9 @@ begin
   Global.Com.SendInitLane(ALaneNo); //레인 초기화
   Global.Com.SendPinSetterOnOff(StrToInt(ATargetLaneNo), 'Y'); //레인 장비 켜기
   Global.Com.SendPinSetterOnOff(StrToInt(ALaneNo), 'N'); //레인 장비 끄기
-  Global.Com.SendLaneTemp(ALaneNo); // 레인 장비 끄기 ????
+  //Global.Com.SendLaneTemp(ALaneNo); // 레인 장비 끄기 ????
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignBowlerMove(AAssignNo, ABowlerId, ATargetLaneNo, AUserId, sTerminalId: String; var ATargetAssignNo, ATargetId: String): String;
@@ -3101,16 +3135,24 @@ var
   bResult: Boolean;
   sSql: String;
   dtPossibleReserveEndDt: TDateTime;
-  jSendObj, jSendObj2, jSendItem: TJSONObject;
-  jSendArr: TJSONArray;
+
   //rBowlerInfoTM: TBowlerInfo;
   rHoldInfo: THoldInfo;
   nByte: Byte;
   sBowlerId, sNm: String;
-begin
-  //chy 배정된 레인에서 다른 배정된 레인으로만 이동하도록 구현, 빈레인으로 이동 구현 필요
 
-  Result := 'fail';
+  sLog: String;
+
+  jSendObj, jSendItem: TJSONObject;
+  jSendArr: TJSONArray;
+  nUseSeqNoTemp: Integer;
+  sAssignNoTemp: String;
+
+  jRecvObj: TJSONObject;
+  sRecvResult, sRecvResultCd, sRecvResultMsg: String;
+begin
+
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3127,13 +3169,94 @@ begin
   end;
 
   nTIdx := GetLaneInfoIndex(StrToInt(ATargetLaneNo));
+
   if FLaneList[nTIdx].Assign.AssignNo = '' then
   begin
+    nUseSeqNoTemp := global.TcpServer.UseSeqNo + 1;
+    sAssignNoTemp := global.TcpServer.UseSeqDate + StrZeroAdd(IntToStr(nUseSeqNoTemp), 4);
+
+    try
+      jSendObj := TJSONObject.Create;
+      jSendArr := TJSONArray.Create;
+      jSendObj.AddPair(TJSONPair.Create('laneAssignList', jSendArr));
+
+      jSendItem := TJSONObject.Create;
+      jSendItem.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+      jSendItem.AddPair(TJSONPair.Create('assign_no', sAssignNoTemp));
+      jSendItem.AddPair(TJSONPair.Create('lane_no', FLaneList[nTIdx].LaneNo)); // 새로등록할 레인번호
+      jSendItem.AddPair(TJSONPair.Create('game_div', FLaneList[nIdx].Assign.GameDiv));
+      jSendItem.AddPair(TJSONPair.Create('game_type', FLaneList[nIdx].Assign.GameType));
+      jSendItem.AddPair(TJSONPair.Create('reserve_datetime', FormatDateTime('YYYY-MM-DD hh:nn:ss', now)));
+      jSendItem.AddPair(TJSONPair.Create('user_id', AUserId));
+      jSendItem.AddPair(TJSONPair.Create('terminal_id', sTerminalId));
+      jSendArr.Add(jSendItem);
+
+      //Erp 전문전송- 레인베정정보 등록
+      sRecvResult := Global.Api.SetErpApiNoData(jSendObj.ToString, 'E001_regLaneAssign', Global.Config.ApiUrl, Global.Config.Token);
+
+      sLog := 'E001_regLaneAssign (볼러이동): ' + sRecvResult;
+      Global.Log.LogErpApiWrite(sLog);
+
+      if sRecvResult <> 'Success' then
+      begin
+        sLog := jSendObj.ToString;
+        Global.Log.LogErpApiWrite(sLog);
+
+        Result := sRecvResult;
+        Exit;
+      end;
+
+    finally
+      FreeAndNil(jSendObj);
+    end;
+  end
+  else
+  begin
+    sAssignNoTemp := FLaneList[nTIdx].Assign.AssignNo;
+  end;
+
+  if FLaneList[nTIdx].Assign.AssignNo = '' then
+    nTBIdx := 1
+  else
+    nTBIdx := FLaneList[nTIdx].Assign.BowlerCnt + 1;
+
+  try
+    jSendObj := TJSONObject.Create;
+    jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+    jSendObj.AddPair(TJSONPair.Create('assign_no', AAssignNo));
+    jSendObj.AddPair(TJSONPair.Create('bowler_seq', IntToStr(nBIdx)));
+    jSendObj.AddPair(TJSONPair.Create('chg_bowler_seq', nTBIdx));
+    jSendObj.AddPair(TJSONPair.Create('move_assign_no', sAssignNoTemp));
+    jSendObj.AddPair(TJSONPair.Create('user_id', AUserId));
+
+    //Erp 전문전송- 볼러이동
+    sRecvResult := Global.Api.SetErpApiNoData(jSendObj.ToString, 'E105_moveBowlerLangAssign', Global.Config.ApiUrl, Global.Config.Token);
+
+    sLog := 'E105_moveBowlerLangAssign : ' + sRecvResult;
+    Global.Log.LogErpApiWrite(sLog);
+
+    if sRecvResult <> 'Success' then
+    begin
+      sLog := jSendObj.ToString;
+      Global.Log.LogErpApiWrite(sLog);
+
+      Result := sRecvResult;
+      Exit;
+    end;
+
+  finally
+    FreeAndNil(jSendObj);
+  end;
+
+  // erp 등록이 정상처리 되면
+  if FLaneList[nTIdx].Assign.AssignNo = '' then
+  begin
+
     //기존배정정보와 동일하게 처리
     FLaneList[nTIdx].Assign := FLaneList[nIdx].Assign;
     FLaneList[nTIdx].Assign.BowlerList[1] := FLaneList[nIdx].Assign.BowlerList[nBIdx];
     FLaneList[nTIdx].Assign.BowlerList[1].BowlerSeq := 1;
-    FLaneList[nTIdx].Assign.BowlerList[1].BowlerId := StrZeroAdd(IntToStr(FLaneList[nTIdx].LaneNo), 2) + 'A';
+    //FLaneList[nTIdx].Assign.BowlerList[1].BowlerId := StrZeroAdd(IntToStr(FLaneList[nTIdx].LaneNo), 2) + 'A';
     FLaneList[nTIdx].Game.BowlerList[1] := FLaneList[nIdx].Game.BowlerList[nBIdx];
 
     for i := 2 to 6 do
@@ -3152,12 +3275,13 @@ begin
     FLaneList[nTIdx].Assign.StartDatetime := formatdatetime('YYYYMMDDhhnn00', Now);
     FLaneList[nTIdx].Assign.BowlerCnt := 1;
 
-    FLaneList[nTIdx].Assign.TotalGameCnt := FLaneList[nTIdx].Assign.BowlerList[1].GameCnt;
+    //FLaneList[nTIdx].Assign.TotalGameCnt := FLaneList[nTIdx].Assign.BowlerList[1].GameCnt;
 
     //예상 예약시간, 예상 종료시간
-    FLaneList[nTIdx].Assign.ReserveDate := '';
+    FLaneList[nTIdx].Assign.ReserveDate := FormatDateTime('YYYYMMDDhhnnss', now);
     FLaneList[nTIdx].Assign.ExpectdEndDate := '';
 
+    {
     if (FLaneList[nTIdx].Assign.GameDiv = 1) and (FLaneList[nTIdx].Assign.TotalGameCnt > 0) then //게임제
     begin
       dtPossibleReserveEndDt := IncMinute(now, (Global.Store.PerGameMin * FLaneList[nTIdx].Assign.TotalGameCnt));
@@ -3170,6 +3294,7 @@ begin
       FLaneList[nTIdx].Assign.ReserveDate := FormatDateTime('YYYYMMDDhhnnss', now);
       FLaneList[nTIdx].Assign.ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
     end;
+    }
 
     //DB저장 - 배정
     bResult := Global.DM.InsertAssignMove(FLaneList[nTIdx].Assign, AUserId);
@@ -3184,76 +3309,30 @@ begin
     sSql := RegGameSql(nTIdx);
     bResult := Global.DM.InsertGame(sSql);
 
-    nTBIdx := 1;
-
-    //Erp 등록용
-    try
-      jSendObj := TJSONObject.Create;
-      jSendArr := TJSONArray.Create;
-      jSendObj.AddPair(TJSONPair.Create('laneAssignList', jSendArr));
-
-      jSendItem := TJSONObject.Create;
-      jSendItem.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-      jSendItem.AddPair(TJSONPair.Create('assign_no', FLaneList[nTIdx].Assign.AssignNo));
-      jSendItem.AddPair(TJSONPair.Create('lane_no', FLaneList[nTIdx].LaneNo));
-      jSendItem.AddPair(TJSONPair.Create('game_div', FLaneList[nTIdx].Assign.GameDiv));
-      jSendItem.AddPair(TJSONPair.Create('game_type', FLaneList[nTIdx].Assign.GameType));
-      jSendItem.AddPair(TJSONPair.Create('reserve_datetime', FormatDateTime('YYYY-MM-DD hh:nn:ss', now)));
-      jSendItem.AddPair(TJSONPair.Create('user_id', AUserId));
-      jSendItem.AddPair(TJSONPair.Create('terminal_id', sTerminalId));
-      jSendArr.Add(jSendItem);
-
-      // 레인베정정보 등록 - ERP 차감로직 미체크
-      Global.Lane.RegAssignEpr(FLaneList[nTIdx].Assign.AssignNo, 'E001_regLaneAssign', jSendObj.ToString);
-
-      jSendObj2 := TJSONObject.Create;
-      jSendObj2.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-      jSendObj2.AddPair(TJSONPair.Create('assign_no', AAssignNo));
-      jSendObj2.AddPair(TJSONPair.Create('bowler_seq', IntToStr(nBIdx)));
-      jSendObj2.AddPair(TJSONPair.Create('chg_bowler_seq', 1));
-      jSendObj2.AddPair(TJSONPair.Create('move_assign_no', FLaneList[nTIdx].Assign.AssignNo));
-      jSendObj2.AddPair(TJSONPair.Create('user_id', AUserId));
-
-      //이동
-      Global.Lane.RegAssignEpr(FLaneList[nTIdx].Assign.AssignNo, 'E105_moveBowlerLangAssign', jSendObj2.ToString);
-    finally
-      FreeAndNil(jSendObj);
-      FreeAndNil(jSendObj2);
-    end;
-
   end
   else
   begin
-    FLaneList[nTIdx].Assign.BowlerCnt := FLaneList[nTIdx].Assign.BowlerCnt + 1; //추가
-    nTBIdx := FLaneList[nTIdx].Assign.BowlerCnt;
-    //nBIdx := StrToInt(ABowlerSeq); //기존:이동할 대상
+    FLaneList[nTIdx].Assign.BowlerCnt := nTBIdx;
 
     //데이터 설정
     FLaneList[nTIdx].Assign.BowlerList[nTBIdx] := FLaneList[nIdx].Assign.BowlerList[nBIdx];
     FLaneList[nTIdx].Assign.BowlerList[nTBIdx].BowlerSeq := nTBIdx;
-
+    {
     sBowlerId := copy(FLaneList[nTIdx].Assign.BowlerList[nTBIdx - 1].BowlerId, 3, 1);
     nByte := Ord(sBowlerId[1]) + 1;
     FLaneList[nTIdx].Assign.BowlerList[nTBIdx].BowlerId := StrZeroAdd(IntToStr(FLaneList[nTIdx].LaneNo), 2) + Char(nbyte);
+    }
+    global.Log.LogReserveWrite(
+    'nBIdx : ' + inttostr(nBIdx) + ' / ' +
+    FLaneList[nIdx].Game.BowlerList[nBIdx].BowlerId+ ' / ' +
+    FLaneList[nIdx].Game.BowlerList[nBIdx].BowlerNm+ ' / ' +
+    inttostr(FLaneList[nIdx].Game.BowlerList[nBIdx].EndGameCnt)+ ' / ' +
+    inttostr(FLaneList[nIdx].Game.BowlerList[nBIdx].ResidualGameCnt)+ ' / ' +
+    FLaneList[nIdx].Game.BowlerList[nBIdx].FramePin[3]+ ' / ' +
+    FLaneList[nIdx].Game.BowlerList[nBIdx].FramePin[4]
+    );
 
     FLaneList[nTIdx].Game.BowlerList[nTBIdx] := FLaneList[nIdx].Game.BowlerList[nBIdx];
-
-    //Erp 등록용
-    try
-      jSendObj2 := TJSONObject.Create;
-      jSendObj2.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-      jSendObj2.AddPair(TJSONPair.Create('assign_no', AAssignNo));
-      jSendObj2.AddPair(TJSONPair.Create('bowler_seq', IntToStr(nBIdx)));
-      jSendObj2.AddPair(TJSONPair.Create('chg_bowler_seq', IntToStr(nTBIdx)));
-      jSendObj2.AddPair(TJSONPair.Create('move_assign_no', FLaneList[nTIdx].Assign.AssignNo));
-      jSendObj2.AddPair(TJSONPair.Create('user_id', AUserId));
-
-      //이동
-      Global.Lane.RegAssignEpr(FLaneList[nTIdx].Assign.AssignNo, 'E105_moveBowlerLangAssign', jSendObj2.ToString);
-    finally
-      FreeAndNil(jSendObj2);
-    end;
-
   end;
 
   //DB저장
@@ -3265,6 +3344,8 @@ begin
   ATargetAssignNo := FLaneList[nTIdx].Assign.AssignNo;
   ATargetId := FLaneList[nTIdx].Assign.BowlerList[nTBIdx].BowlerId;
 
+  SetExpectdEndDate(nTIdx); //예상종료시간 계산
+
   //기존 배정 볼러 정리필요
   nBIdxLast := FLaneList[nIdx].Assign.BowlerCnt;
   if nBIdx < nBIdxLast then
@@ -3274,6 +3355,17 @@ begin
       FLaneList[nIdx].Assign.BowlerList[I] := FLaneList[nIdx].Assign.BowlerList[I + 1];
       FLaneList[nIdx].Assign.BowlerList[I].BowlerSeq := I;
 
+      FLaneList[nIdx].Game.BowlerList[I] := FLaneList[nIdx].Game.BowlerList[I + 1];
+      //ChgGameBowlerList(nIdx, I, nIdx, I + 1);
+
+      global.Log.LogReserveWrite(
+      'I : ' + inttostr(I) + ' / ' +
+      FLaneList[nIdx].Game.BowlerList[I].BowlerId+ ' / ' +
+      FLaneList[nIdx].Game.BowlerList[I].BowlerNm+ ' / ' +
+      inttostr(FLaneList[nIdx].Game.BowlerList[I].EndGameCnt)+ ' / ' +
+      inttostr(FLaneList[nIdx].Game.BowlerList[I].ResidualGameCnt)
+      );
+
       //DB저장 - 인덱스 변경
       bResult := Global.DM.UpdateAssignBowlerSeq(FLaneList[nIdx].Assign.AssignNo, FLaneList[nIdx].Assign.BowlerList[I].BowlerId, I);
     end;
@@ -3281,6 +3373,8 @@ begin
   FLaneList[nIdx].Assign.BowlerList[nBIdxLast].BowlerId := '';
   FLaneList[nIdx].Assign.BowlerList[nBIdxLast].BowlerNm := '';
   FLaneList[nIdx].Assign.BowlerCnt := FLaneList[nIdx].Assign.BowlerCnt - 1;
+
+  SetExpectdEndDate(nIdx); //예상종료시간 계산
 
   //제어
   sNm := FLaneList[nTIdx].Assign.BowlerList[nTBIdx].BowlerNm;
@@ -3294,9 +3388,9 @@ begin
   Global.Com.SendLaneAssignMoveBowler(StrToInt(ATargetLaneNo), nTBIdx, sNm);
 
   Global.Com.SendLaneAssignMoveBowlerDel(FLaneList[nIdx].LaneNo, nBIdx); // 사용자 빼기
-  Global.Com.SendLaneAssignBowlerFin(FLaneList[nIdx].LaneNo); //명령완료
+  //Global.Com.SendLaneAssignBowlerFin(FLaneList[nIdx].LaneNo); //명령완료
 
-  Global.Com.SendLaneAssignBowlerFin(StrToInt(ATargetLaneNo)); //명령완료
+  //Global.Com.SendLaneAssignBowlerFin(StrToInt(ATargetLaneNo)); //명령완료
   Global.Com.SendPinSetterOnOff(StrToInt(ATargetLaneNo), 'Y'); //장치켜기
 
   //볼러 모두 제거된 경우 종료처리
@@ -3312,12 +3406,45 @@ begin
     Global.Lane.SetLaneHold(ATargetLaneNo, rHoldInfo);
   end;
 
-  Result := 'success';
+  Result := 'Success';
+end;
+
+procedure TLane.ChgGameBowlerList(APLaneIdx, APBIdx, AGLaneIdx, AGBIdx: Integer); // 변경할 lane, 볼러idx , data 가져올 lane, 볼러idx
+var
+  i: Integer;
+  nTemp: Integer;
+begin
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].BowlerSeq :=        FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].BowlerSeq;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].BowlerId :=         FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].BowlerId;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].BowlerNm :=         FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].BowlerNm;
+
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].FrameTo :=          FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].FrameTo;
+
+  for I := 1 to 21 do
+    FLaneList[APLaneIdx].Game.BowlerList[APBIdx].FramePin[I] :=    FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].FramePin[I];
+
+  for I := 1 to 10 do
+    FLaneList[APLaneIdx].Game.BowlerList[APBIdx].FrameScore[I] :=  FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].FrameScore[I];
+
+  for I := 1 to 10 do
+    FLaneList[APLaneIdx].Game.BowlerList[APBIdx].FrameLane[I] :=   FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].FrameLane[I];
+
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].TotalScore :=       FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].TotalScore;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].ToCnt :=            FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].ToCnt;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].EndGameCnt :=       FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].EndGameCnt;
+
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].Status1 :=          FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].Status1;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].ResidualGameTime := FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].ResidualGameTime;
+  //FLaneList[APLaneIdx].Game.BowlerList[APBIdx].ResidualGameCnt :=  FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].ResidualGameCnt;
+  nTemp :=  FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].ResidualGameCnt;
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].ResidualGameCnt := nTemp;
+
+  FLaneList[APLaneIdx].Game.BowlerList[APBIdx].Status3 :=          FLaneList[AGLaneIdx].Game.BowlerList[AGBIdx].Status3;
 end;
 
 function TLane.DelAssignBowler(AAssignNo, ABowlerId: String): String;
 var
-  nIdx, nBIdx: Integer;
+  nLIdx, nBIdx: Integer;
   nBIdxLast, i, j: Integer;
   bResult: Boolean;
   sLog: String;
@@ -3325,75 +3452,144 @@ var
   nIdx1, nIdx2, nLaneNo: Integer;
   nCompetitionIdx: Integer;
 
-  jSendObj, jSendItem: TJSONObject;
-  jSendObjArr: TJsonArray;
+
+  rBowlerInfo: TBowlerInfo;
+
+  // erp 요청
+  jSend, jSendItem: TJSONObject;
+  jSendArr: TJsonArray;
+  sRecvResult: String;
+
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
-  nIdx := GetAssignNoIndex(AAssignNo);
-  if nIdx = -1 then // 예약건 확인
-  begin
-    //예약목록 확인
-    bResult := Global.ReserveList.GetReserveAssignNoChk(AAssignNo, nIdx1, nIdx2, nLaneNo);
-    if bResult = False then
-    begin
-      Result := '해당 배정내역이 없습니다';
-      Exit;
-    end;
-
-    //DB저장
-    bResult := Global.DM.UpdateAssignBowlerDel(AAssignNo, ABowlerId, 'Y'); //볼러정보 변경
-
-    sLog := '볼러제거 : ' + AAssignNo + ' / ID:' + ABowlerId;
-    Global.Log.LogServerWrite(sLog);
-
-    Result := 'success';
-    Exit;
-  end;
-
-  nBIdx := GetAssignNoBowlerIndex(nIdx, ABowlerId);
-  if nBIdx = -1 then
+  rBowlerInfo := Global.DM.SelectAssignBowler(AAssignNo, ABowlerId);
+  if rBowlerInfo.BowlerSeq = 0 then
   begin
     Result := '해당 볼러정보가 없습니다.';
     Exit;
   end;
 
-  sLog := '볼러제거 : ' + IntToStr(FLaneList[nIdx].LaneNo) + ' / ' + FLaneList[nIdx].Assign.AssignNo + ' / ' + IntToStr(nBIdx) +
-          ' ID:' + FLaneList[nIdx].Assign.BowlerList[nBIdx].BowlerId + ' Nm:' + FLaneList[nIdx].Assign.BowlerList[nBIdx].BowlerNm;
+  try
+    jSend := TJSONObject.Create;
+    jSend.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+    jSend.AddPair(TJSONPair.Create('assign_no', AAssignNo));
+    jSend.AddPair(TJSONPair.Create('bowler_seq', rBowlerInfo.BowlerSeq));
+    jSend.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
+
+    //Erp 전문전송
+    sRecvResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E103_delBowler', Global.Config.ApiUrl, Global.Config.Token);
+
+    sLog := 'E103_delBowler: ' + sRecvResult;
+    Global.Log.LogErpApiWrite(sLog);
+
+    if sRecvResult <> 'Success' then
+    begin
+      sLog := jSend.ToString;
+      Global.Log.LogErpApiWrite(sLog);
+
+      Result := sRecvResult;
+      Exit;
+    end;
+
+  finally
+    FreeAndNil(jSend);
+  end;
+
+  nLIdx := GetAssignNoIndex(AAssignNo);
+  if nLIdx = -1 then // 예약건 확인
+  begin
+    nBIdx := rBowlerInfo.BowlerSeq;
+    nBIdxLast := Global.DM.SelectAssignBowlerCnt(AAssignNo);
+  end
+  else
+  begin
+    nBIdx := GetAssignNoBowlerIndex(nLIdx, ABowlerId);
+    nBIdxLast := FLaneList[nLIdx].Assign.BowlerCnt;
+  end;
+  {
+  // 보류 - 2024-03-11
+  if nBIdx < nBIdxLast then
+  begin
+    try
+      jSend := TJSONObject.Create;
+      jSend.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
+      jSend.AddPair(TJSONPair.Create('assign_no', AAssignNo));
+      jSend.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
+
+      jSendArr := TJSONArray.Create;
+      jSend.AddPair(TJSONPair.Create('bowlerList', jSendArr));
+
+      for I := nBIdx to nBIdxLast - 1 do
+      begin
+        jSendItem := TJSONObject.Create;
+        jSendItem.AddPair( TJSONPair.Create( 'bowler_seq', I + 1) );
+        jSendItem.AddPair( TJSONPair.Create( 'chg_bowler_seq', I) );
+        jSendArr.Add(jSendItem);
+      end;
+
+      //Erp 전문전송
+      sRecvResult := Global.Api.SetErpApiNoData(jSend.ToString, 'E104_chgBowlerSeq', Global.Config.ApiUrl, Global.Config.Token);
+
+      sLog := 'E104_chgBowlerSeq: ' + sRecvResult;
+      Global.Log.LogErpApiWrite(sLog);
+
+      if sRecvResult <> 'Success' then
+      begin
+        sLog := jSend.ToString;
+        Global.Log.LogErpApiWrite(sLog);
+
+        Result := sRecvResult;
+        Exit;
+      end;
+
+    finally
+      FreeAndNil(jSend);
+    end;
+  end;
+  }
+  sLog := '볼러제거 - AssignNo: ' + AAssignNo + ' / ID:' + ABowlerId;
   Global.Log.LogServerWrite(sLog);
 
   //DB저장
-  bResult := Global.DM.UpdateAssignBowlerDel(FLaneList[nIdx].Assign.AssignNo, ABowlerId, 'Y'); //볼러정보 변경
+  bResult := Global.DM.UpdateAssignBowlerDel(AAssignNo, ABowlerId, 'Y'); //볼러정보 변경
+
+  if nLIdx = -1 then // 예약건 확인
+  begin
+    Result := 'Success';
+    Exit;
+  end;
 
   //기존 배정 볼러 정리필요
-  nBIdxLast := FLaneList[nIdx].Assign.BowlerCnt;
   if nBIdx < nBIdxLast then
   begin
     for I := nBIdx to nBIdxLast - 1 do
     begin
-      FLaneList[nIdx].Assign.BowlerList[I] := FLaneList[nIdx].Assign.BowlerList[I + 1];
+      FLaneList[nLIdx].Assign.BowlerList[I] := FLaneList[nLIdx].Assign.BowlerList[I + 1];
       //FLaneList[nIdx].Assign.BowlerList[I].BowlerSeq := I;
 
       //DB저장 - 인덱스 변경
-      bResult := Global.DM.UpdateAssignBowlerSeq(FLaneList[nIdx].Assign.AssignNo, FLaneList[nIdx].Assign.BowlerList[I].BowlerId, I);
+      bResult := Global.DM.UpdateAssignBowlerSeq(FLaneList[nLIdx].Assign.AssignNo, FLaneList[nLIdx].Assign.BowlerList[I].BowlerId, I);
     end;
   end;
-  FLaneList[nIdx].Assign.BowlerList[nBIdxLast].BowlerId := '';
-  FLaneList[nIdx].Assign.BowlerList[nBIdxLast].BowlerNm := '';
-  FLaneList[nIdx].Assign.BowlerCnt := FLaneList[nIdx].Assign.BowlerCnt - 1;
+  FLaneList[nLIdx].Assign.BowlerList[nBIdxLast].BowlerId := '';
+  FLaneList[nLIdx].Assign.BowlerList[nBIdxLast].BowlerNm := '';
+  FLaneList[nLIdx].Assign.BowlerCnt := FLaneList[nLIdx].Assign.BowlerCnt - 1;
 
-  if FLaneList[nIdx].Assign.CompetitionSeq > 0 then //게임이 대회이면
+  SetExpectdEndDate(nLIdx); //예상종료시간 계산
+
+  if FLaneList[nLIdx].Assign.CompetitionSeq > 0 then //게임이 대회이면
   begin
-    nCompetitionIdx := GetCompetitionIndex(FLaneList[nIdx].Assign.CompetitionSeq);
+    nCompetitionIdx := GetCompetitionIndex(FLaneList[nLIdx].Assign.CompetitionSeq);
     if nCompetitionIdx > -1 then
     begin
       for i := 0 to Length(FCompetitionList[nCompetitionIdx].List) - 1 do
       begin
-        if FCompetitionList[nCompetitionIdx].List[i].AssignNo = FLaneList[nIdx].Assign.AssignNo then //대회
+        if FCompetitionList[nCompetitionIdx].List[i].AssignNo = FLaneList[nLIdx].Assign.AssignNo then //대회
         begin
           for j := 1 to 6 do
           begin
-            FCompetitionList[nCompetitionIdx].List[i].BowlerList[j] := FLaneList[nIdx].Assign.BowlerList[j];
+            FCompetitionList[nCompetitionIdx].List[i].BowlerList[j] := FLaneList[nLIdx].Assign.BowlerList[j];
           end;
 
           sLog := '대회정보 변경 - 볼러삭제';
@@ -3405,48 +3601,17 @@ begin
     end;
   end;
 
-  bResult := Global.DM.UpdateGame(FLaneList[nIdx].Assign.AssignNo, FLaneList[nIdx].Assign.GameSeq, FLaneList[nIdx].Assign.BowlerCnt); //게임정보 변경
+  bResult := Global.DM.UpdateGame(FLaneList[nLIdx].Assign.AssignNo, FLaneList[nLIdx].Assign.GameSeq, FLaneList[nLIdx].Assign.BowlerCnt); //게임정보 변경
 
   //제어
   //Global.Com.SendLaneAssignBowlerDel(FLaneList[nIdx].LaneNo, nBIdx);
-  Global.Com.SendLaneAssignMoveBowlerDel(FLaneList[nIdx].LaneNo, nBIdx); // 사용자 빼기
-
-  jSendObj := TJSONObject.Create;
-  jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-  jSendObj.AddPair(TJSONPair.Create('assign_no', AAssignNo));
-  jSendObj.AddPair(TJSONPair.Create('bowler_seq', nBIdx));
-  jSendObj.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
-
-  RegAssignEpr(AAssignNo, 'E103_delBowler', jSendObj.ToString);
-  FreeAndNil(jSendObj);
-
-  if nBIdx < nBIdxLast then
-  begin
-    jSendObj := TJSONObject.Create;
-    jSendObj.AddPair(TJSONPair.Create('store_cd', Global.Config.StoreCd));
-    jSendObj.AddPair(TJSONPair.Create('assign_no', AAssignNo));
-    jSendObj.AddPair(TJSONPair.Create('user_id', Global.Config.TerminalId));
-
-    jSendObjArr := TJSONArray.Create;
-    jSendObj.AddPair(TJSONPair.Create('bowlerList', jSendObjArr));
-
-    for I := nBIdx to nBIdxLast - 1 do
-    begin
-      jSendItem := TJSONObject.Create;
-      jSendItem.AddPair( TJSONPair.Create( 'bowler_seq', I + 1) );
-      jSendItem.AddPair( TJSONPair.Create( 'chg_bowler_seq', I) );
-      jSendObjArr.Add(jSendItem);
-    end;
-
-    RegAssignEpr(AAssignNo, 'E104_chgBowlerSeq', jSendObj.ToString);
-    FreeAndNil(jSendObj);
-  end;
+  Global.Com.SendLaneAssignMoveBowlerDel(FLaneList[nLIdx].LaneNo, nBIdx); // 사용자 빼기
 
   //볼러 모두 제거된 경우 종료처리
-  if FLaneList[nIdx].Assign.BowlerCnt = 0 then
-    SetLaneAssignCancel(0, 1, FLaneList[nIdx].Assign.AssignNo);
+  if FLaneList[nLIdx].Assign.BowlerCnt = 0 then
+    SetLaneAssignCancel(0, 1, FLaneList[nLIdx].Assign.AssignNo);
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignBowlerGameCnt(AAssignNo, ABowlerId, AGameCnt: String): String;
@@ -3457,7 +3622,7 @@ var
 
   nIdx1, nIdx2, nLaneNo: Integer;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3475,7 +3640,7 @@ begin
     sLog := '볼러 게임수 변경 : ' + AAssignNo + ' / ID:' + ABowlerId;
     Global.Log.LogServerWrite(sLog);
 
-    Result := 'success';
+    Result := 'Success';
     Exit;
   end;
 
@@ -3495,7 +3660,7 @@ begin
   Global.Com.SendLaneAssignBowlerGameCnt(FLaneList[nIdx].LaneNo, nBIdx, StrToInt(AGameCnt));
   Global.Com.SendLaneAssignBowlerGameCntSet(FLaneList[nIdx].LaneNo, nBIdx);
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignBowlerGameTime(AAssignNo, ABowlerId, AGameTime: String): String;
@@ -3506,7 +3671,7 @@ var
 
   nIdx1, nIdx2, nLaneNo: Integer;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3524,7 +3689,7 @@ begin
     sLog := '볼러 게임시간 변경 : ' + AAssignNo + ' / ID:' + ABowlerId;
     Global.Log.LogServerWrite(sLog);
 
-    Result := 'success';
+    Result := 'Success';
     Exit;
   end;
 
@@ -3544,7 +3709,7 @@ begin
   //제어
   Global.Com.SendLaneAssignBowlerGameTime(FLaneList[nIdx].LaneNo, nBIdx, StrToInt(AGameTime));
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignBowlerSwitch(AAssignNo, ABowlerId, AOrderSeq: String): String;
@@ -3558,7 +3723,7 @@ var
   jSendObj, jSendItem: TJSONObject;
   jSendObjArr: TJsonArray;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3653,7 +3818,7 @@ begin
   RegAssignEpr(AAssignNo, 'E107_exChgBowlerSeq', jSendObj.ToString);
   FreeAndNil(jSendObj);
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignBowlerHandy(AAssignNo, ABowlerId, AHandy: String): String;
@@ -3662,7 +3827,7 @@ var
   I: Integer;
   bResult: Boolean;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3686,7 +3851,7 @@ begin
   //제어
   Global.Com.SendLaneAssignGameHandy(FLaneList[nIdx].LaneNo, nBIdx, StrToInt(AHandy));
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgAssignGameLeague(ALaneNo, AUseYn: String): Boolean;
@@ -3819,7 +3984,7 @@ var
   nIdx, nBIdx, i, j: Integer;
   rGameInfoListDB: TList<TGameInfoDB>;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetLaneInfoIndex(StrToInt(ALaneNo));
 
@@ -3858,7 +4023,7 @@ begin
   //이전게임정보로 제어
   //Global.Com.SendLaneAssignMove(StrToInt(ALaneNo));
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.ChgBowlerPayment(AAssignNo, ABowlerId, APaymentType: String): String;
@@ -3869,14 +4034,14 @@ var
   nPayment: Integer;
   sStr: String;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
   begin
     bResult := Global.ReserveList.ChgReserveBowlerPayment(AAssignNo, ABowlerId, APaymentType);
     if bResult = True then
-      Result := 'success';
+      Result := 'Success';
     Exit;
   end;
 
@@ -3904,7 +4069,7 @@ begin
 
   if FLaneList[nIdx].Assign.BowlerList[nBIdx].PaymentType = StrToInt(APaymentType) then
   begin
-    Result := 'success';
+    Result := 'Success';
     Exit;
   end;
 
@@ -3953,14 +4118,14 @@ begin
     end;
   end;
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 function TLane.chgBowlerPause(AAssignNo, ABowlerId, APauseYn: String): String;
 var
   nIdx, nBIdx: Integer;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -3979,7 +4144,7 @@ begin
   //제어
   Global.Com.SendBowlerPause(FLaneList[nIdx].LaneNo, nBIdx, APauseYn);
 
-  Result := 'success';
+  Result := 'Success';
 end;
 
 procedure TLane.RegAssignEpr(AAssignNo, AApi, AJson: String);
@@ -4003,7 +4168,7 @@ begin
 
   while True do
   begin
-    if FLaneReserveUse = False then
+    if Global.ServerErp = False then
       Break;
 
     sLog := 'LaneReserveErp!';
@@ -4011,7 +4176,7 @@ begin
 
     sleep(50);
   end;
-  FLaneStatusUse := True;
+  Global.LaneErp := True;
 
   try
     sApi := TSendApiData(FSendApiList.Objects[0]).Api;
@@ -4038,7 +4203,7 @@ begin
     end;
 
   finally
-    FLaneStatusUse := False;
+    Global.LaneErp := False;
   end;
 end;
 
@@ -4047,7 +4212,7 @@ var
   nIdx, nBIdx: Integer;
   I: Integer;
 begin
-  Result := 'fail';
+  Result := 'Fail';
 
   nIdx := GetAssignNoIndex(AAssignNo);
   if nIdx = -1 then
@@ -4065,7 +4230,43 @@ begin
 
   Global.Com.SendLaneGameScoreChange(FLaneList[nIdx].LaneNo, nBIdx, AFrame);
 
-  Result := 'success';
+  Result := 'Success';
+end;
+
+function TLane.ChkBowlerNm(ABowlerNm: String): String;
+var
+  I, J: Integer;
+  sStr, sTemp: String;
+  nByte: Byte;
+begin
+
+  Result := '';
+  sStr := '';
+  for I := 0 to FLaneCnt - 1 do
+  begin
+    if FLaneList[I].Assign.AssignNo = '' then
+      Continue;
+
+    for J := 1 to FLaneList[I].Assign.BowlerCnt do
+    begin
+      if Copy(FLaneList[I].Assign.BowlerList[J].BowlerNm, 1, 2) = ABowlerNm then
+      begin
+        if sStr < FLaneList[I].Assign.BowlerList[J].BowlerNm then
+          sStr := FLaneList[I].Assign.BowlerList[J].BowlerNm;
+      end;
+    end;
+  end;
+
+  if sStr = '' then
+    sStr := ABowlerNm + 'A'
+  else
+  begin
+    sTemp := copy(sStr, 3, 1);
+    nByte := Ord(sTemp[1]) + 1;
+    sStr := ABowlerNm + Char(nByte);
+  end;
+
+  Result := sStr;
 end;
 
 procedure TLane.SetLaneErrorCnt(ALaneNo: Integer; AError: String; AMaxCnt: Integer);
@@ -4129,6 +4330,61 @@ begin
   end;
 end;
 
+procedure TLane.SetExpectdEndDate(ALIdx: Integer);
+var
+  nReserveCnt, nTotalGameCnt, i: Integer;
+  sLog: String;
+  dtTemp, dtPossibleReserveEndDt: TDateTime;
+  bResult: Boolean;
+begin
+  nReserveCnt := 0;
+  nTotalGameCnt := 0;
+
+  nReserveCnt := Global.ReserveList.GetReserveListCnt(FLaneList[ALIdx].Assign.LaneNo);
+
+  if nReserveCnt > 0 then
+  begin
+    sLog := 'SetExpectdEndDate- No:' + IntTostr(FLaneList[ALIdx].Assign.LaneNo) + ' / ' +FLaneList[ALIdx].Assign.AssignNo + ' / ReserveCnt = ' + IntToStr(nReserveCnt);
+    global.Log.LogReserveWrite(sLog);
+    Exit;
+  end;
+
+  dtTemp := DateStrToDateTime(FLaneList[ALIdx].Assign.ReserveDate);
+
+  for i := 1 to FLaneList[ALIdx].Assign.BowlerCnt do
+  begin
+    nTotalGameCnt := nTotalGameCnt + FLaneList[ALIdx].Assign.BowlerList[i].GameCnt;
+  end;
+
+  if nTotalGameCnt = 0 then
+  begin
+    sLog := 'SetExpectdEndDate- No:' + IntTostr(FLaneList[ALIdx].Assign.LaneNo) + ' / ' +FLaneList[ALIdx].Assign.AssignNo + ' / nTotalGameCnt = 0';
+    global.Log.LogReserveWrite(sLog);
+    Exit;
+  end;
+
+  if (FLaneList[ALIdx].Assign.GameDiv = 1) then //게임제
+  begin
+    dtPossibleReserveEndDt := IncMinute(dtTemp, (Global.Store.PerGameMin * nTotalGameCnt));
+    FLaneList[ALIdx].Assign.ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
+  end;
+  { // 시간제 보류
+  else if FLaneList[nTIdx].Assign.GameDiv = 2 then //시간제
+  begin
+    dtPossibleReserveEndDt := IncMinute(dtTemp, FLaneList[nTIdx].Assign.TotalGameCnt);
+    FLaneList[nTIdx].Assign.ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
+  end;
+  }
+
+  //DB저장
+  bResult := Global.DM.UpdateExpectdEndDate(FLaneList[ALIdx].Assign.AssignNo, FLaneList[ALIdx].Assign.ExpectdEndDate);
+  if bResult = False then
+  begin
+    sLog := 'SetExpectdEndDate- No:' + IntTostr(FLaneList[ALIdx].Assign.LaneNo) + ' / ' +FLaneList[ALIdx].Assign.AssignNo + ' / DB 저장 실패';
+    global.Log.LogReserveWrite(sLog);
+    Exit;
+  end;
+end;
 
 {
 const

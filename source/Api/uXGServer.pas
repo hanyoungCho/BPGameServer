@@ -10,10 +10,11 @@ type
   TTcpServer = class
   private
     FTcpServer: TIdTCPServer;
-    FUseSeqNo: Integer;
     FCommonSeqNo: Integer;
     //FLastUseSeqNo: Integer; //마지막 임시seq
     FUseSeqDate: String;
+    FUseSeqNo: Integer;
+    FUseSeqUser: Integer;
     FLastReceiveData: AnsiString;
 
     FCS: TRTLCriticalSection;
@@ -62,11 +63,14 @@ type
     function ChgLaneHold(AReceiveData: AnsiString): AnsiString;
     function ChgLaneLock(AReceiveData: AnsiString): AnsiString;
 
+    function ServerErpUse(AUse: Boolean): Boolean; // erp 전송여부 체크-레인쓰레드에서 사용중인지 체크
+
     property TcpServer: TIdTCPServer read FTcpServer write FTcpServer;
-    property UseSeqNo: Integer read FUseSeqNo write FUseSeqNo;
     property CommonSeqNo: Integer read FCommonSeqNo write FCommonSeqNo;
     //property LastUseSeqNo: Integer read FLastUseSeqNo write FLastUseSeqNo;
+    property UseSeqNo: Integer read FUseSeqNo write FUseSeqNo;
     property UseSeqDate: String read FUseSeqDate write FUseSeqDate;
+    property UseSeqUser: Integer read FUseSeqUser write FUseSeqUser;
   end;
 
 implementation
@@ -396,7 +400,7 @@ begin
 
     sResult := Global.Lane.chgBowlerPause(sAssignNo, sBowlerId, sPauseYn);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -423,7 +427,7 @@ begin
 
     sResult := Global.Lane.SetLaneAssignCancel(StrToInt(sLaneNo), 0, '');
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -449,35 +453,29 @@ var
   dtPossibleReserveDt, dtPossibleReserveEndDt: TDateTime;
   nTotalGameCnt, nTotalGameMin: Integer;
 
-  //응답
-  jRecvObjArr: TJSONArray;
-  jRecvObj, jRecvObjItem: TJSONObject;
-
   //erp 전송용
   jSendArr: TJSONArray;
   jSend, jSendItem: TJSONObject;
   jSendSubArr: TJSONArray;
   jSendSubItem: TJSONObject;
 
-  nCompetitionSeq, nLaneMoveCnt, nTrainMin: Integer;
+  nCompetitionSeq, nLaneMoveCnt, nTrainMin, nCompetitionTotalGameCnt: Integer;
   sCompetitionLeagueYn, sMoveMethod: String;
 
-  sResult, sLog, sErpRvResultCd, sErpRvResultMsg: String;
-  jErpRvObj: TJSONObject;
+  sLog: String;
+
+  jRecv: TJSONObject;
+  sRecvResult, sRecvResultCd, sRecvResultMsg: String;
 
   nCommonCtl: Integer;
+
+  //응답
+  jTempArr: TJSONArray;
+  jTemp, jTempItem: TJSONObject;
+
 begin
 
-  while True do
-  begin
-    if Global.Lane.LaneStatusUse = False then //TeeboxThread 사용중인지
-      Break;
-
-    Global.Log.LogErpApiDelayWrite('LaneStatusUse !!!!!!');
-    sleep(50);
-  end;
-
-  Global.Lane.LaneReserveUse := True;
+  ServerErpUse(True);
 
   //Z102_regLaneGame
   Result := '';
@@ -503,6 +501,7 @@ begin
       nCommonCtl := FCommonSeqNo;
     end;
 
+    nCompetitionTotalGameCnt := 0;
     for i := 0 to nArrDataCnt - 1 do
     begin
       jObjData := jObjArrData.Get(i) as TJSONObject;
@@ -564,8 +563,16 @@ begin
         rAssignInfoArr[i].BowlerList[nIdx + 1].ParticipantsSeq := StrToInt(jObjBowler.GetValue('participants_seq').Value);
 
         rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerSeq := nIdx + 1;
-        rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerId := jObjBowler.GetValue('bowler_id').Value;
-        rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerNm := jObjBowler.GetValue('bowler_nm').Value;
+
+        //rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerId := jObjBowler.GetValue('bowler_id').Value;
+        inc(FUseSeqUser);
+        rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerId := Copy(UseSeqDate, 7, 2) + StrZeroAdd(IntToStr(FUseSeqUser), 4);
+
+        if (jObjBowler.GetValue('bowler_id').Value = jObjBowler.GetValue('bowler_nm').Value) then // ID 와 볼러명이 동일한 경우 임의등록자로 판단
+          rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerNm := StrZeroAdd(IntToStr(UseSeqNo), 2) + Char(64 + (nIdx + 1))
+        else
+          rAssignInfoArr[i].BowlerList[nIdx + 1].BowlerNm := jObjBowler.GetValue('bowler_nm').Value;
+
         rAssignInfoArr[i].BowlerList[nIdx + 1].MemberNo := jObjBowler.GetValue('member_no').Value;
         //rAssignInfo.BowlerList[nIdx].GameStartSeq := 1;
         //rAssignInfo.BowlerList[nIdx].GamePlayCnt := 0;
@@ -591,31 +598,50 @@ begin
             nTotalGameMin := rAssignInfoArr[i].BowlerList[nIdx + 1].GameMin;
         end;
       end;
-      rAssignInfoArr[i].TotalGameCnt := nTotalGameCnt;
-      rAssignInfoArr[i].TotalGameMin := nTotalGameMin;
+
+      if nCompetitionSeq > 0 then // 대회 예상종료시간
+      begin
+        if nCompetitionTotalGameCnt < nTotalGameCnt then
+          nCompetitionTotalGameCnt := nTotalGameCnt;
+      end;
+
+      //rAssignInfoArr[i].TotalGameCnt := nTotalGameCnt;
+      //rAssignInfoArr[i].TotalGameMin := nTotalGameMin;
       rAssignInfoArr[i].BowlerCnt := nArrBowlerCnt;
 
       //예상 예약시간, 예상 종료시간
       rAssignInfoArr[i].ReserveDate := '';
       rAssignInfoArr[i].ExpectdEndDate := '';
 
+      dtPossibleReserveDt := DateStrToDateTime(Global.Lane.GetPossibleReserveDatetime(rAssignInfoArr[i].LaneNo));
+      rAssignInfoArr[i].ReserveDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveDt);
+
       if nCompetitionSeq = 0 then
       begin
-        dtPossibleReserveDt := DateStrToDateTime(Global.Lane.GetPossibleReserveDatetime(rAssignInfoArr[i].LaneNo));
-        if (rAssignInfoArr[i].GameDiv = 1) and (rAssignInfoArr[i].TotalGameCnt > 0) then //게임제
+        if (rAssignInfoArr[i].GameDiv = 1) and (nTotalGameCnt > 0) then //게임제
         begin
-          dtPossibleReserveEndDt := IncMinute(dtPossibleReserveDt, (Global.Store.PerGameMin * rAssignInfoArr[i].TotalGameCnt));
-          rAssignInfoArr[i].ReserveDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveDt);
+          dtPossibleReserveEndDt := IncMinute(dtPossibleReserveDt, (Global.Store.PerGameMin * nTotalGameCnt));
           rAssignInfoArr[i].ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
         end
         else if rAssignInfoArr[i].GameDiv = 2 then //시간제
         begin
-          dtPossibleReserveEndDt := IncMinute(dtPossibleReserveDt, rAssignInfoArr[i].TotalGameMin);
-          rAssignInfoArr[i].ReserveDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveDt);
+          dtPossibleReserveEndDt := IncMinute(dtPossibleReserveDt, nTotalGameMin);
           rAssignInfoArr[i].ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
         end;
       end;
 
+    end;
+
+    if nCompetitionSeq > 0 then // 대회 예상종료시간
+    begin
+      for i := 0 to nArrDataCnt - 1 do
+      begin
+        rAssignInfoArr[i].ReserveDate := FormatDateTime('YYYYMMDDhhnnss', Now);
+
+        //if (rAssignInfoArr[i].GameDiv = 1) and (nTotalGameCnt > 0) then //게임제
+        dtPossibleReserveEndDt := IncMinute(Now, (Global.Store.PerGameMin * nCompetitionTotalGameCnt));
+        rAssignInfoArr[i].ExpectdEndDate := FormatDateTime('YYYYMMDDhhnnss', dtPossibleReserveEndDt);
+      end;
     end;
 
     //Erp 전송-가능여부 체크
@@ -659,37 +685,32 @@ begin
       end;
 
       //Erp 전문전송- 레인베정정보 등록
-      sResult := Global.Api.SetErpApiJsonData(jSend.ToString, 'E001_regLaneAssign', Global.Config.ApiUrl, Global.Config.Token);
+      sRecvResult := Global.Api.SetErpApiJsonData(jSend.ToString, 'E001_regLaneAssign', Global.Config.ApiUrl, Global.Config.Token);
 
-      sLog := 'E001_regLaneAssign : ' + sResult;
+      sLog := 'E001_regLaneAssign : ' + sRecvResult;
       Global.Log.LogErpApiWrite(sLog);
 
-      if (Copy(sResult, 1, 1) <> '{') or (Copy(sResult, Length(sResult), 1) <> '}') then
+      if (Copy(sRecvResult, 1, 1) <> '{') or (Copy(sRecvResult, Length(sRecvResult), 1) <> '}') then
       begin
         sLog := jSend.ToString;
         Global.Log.LogErpApiWrite(sLog);
 
-        Result := '{"result_cd":"GS02","result_msg":"' + sResult + '"}';
-
-        Global.Lane.LaneReserveUse := False;
+        Result := '{"result_cd":"GS02","result_msg":"' + sRecvResult + '"}';
         Exit;
       end;
 
-      jErpRvObj := TJSONObject.ParseJSONValue(sResult) as TJSONObject;
-      sErpRvResultCd := jErpRvObj.GetValue('result_cd').Value;
-      sErpRvResultMsg := jErpRvObj.GetValue('result_msg').Value;
+      jRecv := TJSONObject.ParseJSONValue(sRecvResult) as TJSONObject;
+      sRecvResultCd := jRecv.GetValue('result_cd').Value;
+      sRecvResultMsg := jRecv.GetValue('result_msg').Value;
 
-      if sErpRvResultCd <> '0000' then
+      if sRecvResultCd <> '0000' then
       begin
-        Result := '{"result_cd":"' + sErpRvResultCd + '",' +
-                   '"result_msg":"' + sErpRvResultMsg + '"}';
-
-        Global.Lane.LaneReserveUse := False;
-        FreeAndNil(jErpRvObj);
+        Result := '{"result_cd":"' + sRecvResultCd + '", result_msg":"' + sRecvResultMsg + '"}';
+        FreeAndNil(jRecv);
         Exit;
       end;
 
-      FreeAndNil(jErpRvObj);
+      FreeAndNil(jRecv);
     finally
       FreeAndNil(jSend);
     end;
@@ -723,28 +744,34 @@ begin
 
     //응답 전문
     try
-      jRecvObjArr := TJSONArray.Create;
-      jRecvObj := TJSONObject.Create;
-      jRecvObj.AddPair(TJSONPair.Create('result_cd', '0000'));
-      jRecvObj.AddPair(TJSONPair.Create('result_msg', 'Success'));
-      jRecvObj.AddPair(TJSONPair.Create('result_data', jRecvObjArr));
+      jTempArr := TJSONArray.Create;
+      jTemp := TJSONObject.Create;
+      jTemp.AddPair(TJSONPair.Create('result_cd', '0000'));
+      jTemp.AddPair(TJSONPair.Create('result_msg', 'Success'));
+      jTemp.AddPair(TJSONPair.Create('result_data', jTempArr));
 
       for i := 0 to nArrDataCnt - 1 do
       begin
-        jRecvObjItem := TJSONObject.Create;
-        jRecvObjItem.AddPair( TJSONPair.Create( 'lane_no', rAssignInfoArr[i].LaneNo) );
-        jRecvObjItem.AddPair( TJSONPair.Create( 'assign_no', rAssignInfoArr[i].AssignNo) );
-        jRecvObjArr.Add(jRecvObjItem);
+        jTempItem := TJSONObject.Create;
+        jTempItem.AddPair( TJSONPair.Create( 'lane_no', rAssignInfoArr[i].LaneNo) );
+        jTempItem.AddPair( TJSONPair.Create( 'assign_no', rAssignInfoArr[i].AssignNo) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_1', rAssignInfoArr[i].BowlerList[1].BowlerId) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_2', rAssignInfoArr[i].BowlerList[2].BowlerId) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_3', rAssignInfoArr[i].BowlerList[3].BowlerId) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_4', rAssignInfoArr[i].BowlerList[4].BowlerId) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_5', rAssignInfoArr[i].BowlerList[5].BowlerId) );
+        jTempItem.AddPair( TJSONPair.Create( 'bowler_id_6', rAssignInfoArr[i].BowlerList[6].BowlerId) );
+        jTempArr.Add(jTempItem);
       end;
 
-      Result := jRecvObj.ToString;
+      Result := jTemp.ToString;
     finally
-      FreeAndNil(jRecvObj);
+      FreeAndNil(jTemp);
     end;
 
   finally
     FreeAndNil(jObj);
-    Global.Lane.LaneReserveUse := False;
+    ServerErpUse(False);
   end;
 
 end;
@@ -845,7 +872,7 @@ begin
 
     sResult := Global.Lane.SetLaneAssignCancel(0, 1, sAssignNo);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -875,7 +902,7 @@ begin
 
     sResult := Global.Lane.ChgBowlerScore(sAssignNo, sBowlerId, sFrame);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS05", "result_msg":"' + sResult + '"}';
@@ -915,15 +942,7 @@ var
   rBowlerInfoTM: TBowlerInfo;
   sResult: String;
 begin
-  while True do
-  begin
-    if Global.Lane.LaneStatusUse = False then //TeeboxThread 사용중인지
-      Break;
-
-    Global.Log.LogErpApiDelayWrite('LaneStatusUse !!!!!!');
-    sleep(50);
-  end;
-  Global.Lane.LaneReserveUse := True;
+  ServerErpUse(True);
 
   //Z106_regBowler
   Result := '';
@@ -934,13 +953,14 @@ begin
     sUserId := jObj.GetValue('user_id').Value;
     sAssignNo := jObj.GetValue('assign_no').Value;
 
-    rBowlerInfoTM.BowlerId := jObj.GetValue('bowler_id').Value;
-    rBowlerInfoTM.BowlerNm := jObj.GetValue('bowler_nm').Value;
-    if Trim(rBowlerInfoTM.BowlerNm) = '' then
-    begin
-      Result := '{"result_cd":"GS99", "result_msg":"볼러명이 없습니다."}';
-      Exit;
-    end;
+    //rBowlerInfoTM.BowlerId := jObj.GetValue('bowler_id').Value;
+    inc(FUseSeqUser);
+    rBowlerInfoTM.BowlerId := Copy(UseSeqDate, 7, 2) + StrZeroAdd(IntToStr(FUseSeqUser), 4);;
+
+    if (jObj.GetValue('bowler_id').Value = jObj.GetValue('bowler_nm').Value) then // ID 와 볼러명이 동일한 경우 임의등록자로 판단
+      rBowlerInfoTM.BowlerNm := ''
+    else
+      rBowlerInfoTM.BowlerNm := jObj.GetValue('bowler_nm').Value;
     rBowlerInfoTM.MemberNo := jObj.GetValue('member_no').Value;
     rBowlerInfoTM.GameStart := 0;
     rBowlerInfoTM.GameCnt := StrToInt(jObj.GetValue('game_cnt').Value);
@@ -958,13 +978,13 @@ begin
     // 레인베정정보에 볼러 등록
     sResult := Global.Lane.SetAssignBowler(sAssignNo, rBowlerInfoTM, sUserId);
 
-    if sResult = 'success' then
-      Result := '{"result_cd":"0000", "result_msg":"Success"}'
+    if sResult = 'Success' then
+      Result := '{"result_cd":"0000", "result_msg":"Success", "assign_no":"' + sAssignNo + '", "bowler_id":"' + rBowlerInfoTM.BowlerId + '"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
   finally
     FreeAndNil(jObj);
-    Global.Lane.LaneReserveUse := False;
+    ServerErpUse(False);
   end;
 
 end;
@@ -976,15 +996,7 @@ var
   rBowlerInfoTM: TBowlerInfo;
   sResult: String;
 begin
-  while True do
-  begin
-    if Global.Lane.LaneStatusUse = False then //TeeboxThread 사용중인지
-      Break;
-
-    Global.Log.LogErpApiDelayWrite('LaneStatusUse !!!!!!');
-    sleep(50);
-  end;
-  Global.Lane.LaneReserveUse := True;
+  ServerErpUse(True);
 
   //Z107_chgBowler
   Result := '';
@@ -1014,13 +1026,13 @@ begin
     // 레인베정정보에 볼러 변경
     sResult := Global.Lane.ChgAssignBowler(sAssignoNo, rBowlerInfoTM, sUserId);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
   finally
     FreeAndNil(jObj);
-    Global.Lane.LaneReserveUse := False;
+    ServerErpUse(False);
   end;
 
 end;
@@ -1051,7 +1063,7 @@ begin
 
     // 레인베정정보에 볼러 변경
     sResult := Global.Lane.ChgAssignRestore(sLaneNo);
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS04","result_msg":"' + sResult + '"}';
@@ -1071,6 +1083,7 @@ var
   rHoldInfo: THoldInfo;
 begin
   // 프로세서 -- 일단 7번 사용자 정보를 9번에 등록 >> 7번레인 초기화 >> 9번레인 장비 켜기 >> 7번레인 장비 끄기 >> ???
+  ServerErpUse(True);
 
   //Z109_chgLaneMove
   Result := '';
@@ -1093,7 +1106,7 @@ begin
 
     sResult := Global.Lane.ChgAssignMove(sLaneNo, sTargetLaneNo);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
     begin
       Result := '{"result_cd":"0000", "result_msg":"Success"}';
 
@@ -1109,6 +1122,7 @@ begin
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
   finally
     FreeAndNil(jObj);
+    ServerErpUse(False);
   end;
 
 end;
@@ -1119,6 +1133,8 @@ var
   sApi, sUserId, sAssignNo, sBowlerId, sTerminalId, sTargetLaneNo: String;
   sResult, sTargetAssignNo, sTargetId: String;
 begin
+
+  ServerErpUse(True);
 
   //Z110_chgLaneBowlerMove
   Result := '';
@@ -1134,12 +1150,13 @@ begin
 
     sResult := Global.Lane.ChgAssignBowlerMove(sAssignNo, sBowlerId, sTargetLaneNo, sUserId, sTerminalId, sTargetAssignNo, sTargetId);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success", "assign_no":"' + sTargetAssignNo + '", "bowler_id":"' + sTargetId + '"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
   finally
     FreeAndNil(jObj);
+    ServerErpUse(False);
   end;
 end;
 
@@ -1149,6 +1166,7 @@ var
   sApi, sUserId, sAssignNo, sBowlerId: String;
   sResult: String;
 begin
+  ServerErpUse(True);
 
   //Z111_delBowler
   Result := '';
@@ -1162,12 +1180,13 @@ begin
 
     sResult := Global.Lane.DelAssignBowler(sAssignNo, sBowlerId);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
   finally
     FreeAndNil(jObj);
+    ServerErpUse(False);
   end;
 end;
 
@@ -1191,7 +1210,7 @@ begin
 
     sResult := Global.Lane.ChgAssignBowlerGameCnt(sAssignNo, sBowlerId, sGameCnt);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1308,7 +1327,7 @@ begin
 
     sResult := Global.Lane.ChgAssignBowlerGameTime(sAssignNo, sBowlerId, sGameTime);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1338,7 +1357,7 @@ begin
 
     sResult := Global.Lane.ChgBowlerPayment(sAssignNo, sBowlerId, sPaymentType);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1367,7 +1386,7 @@ begin
 
     sResult := Global.Lane.ChgAssignBowlerSwitch(sAssignNo, sBowlerId, sOrderSeq);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1396,7 +1415,7 @@ begin
 
     sResult := Global.Lane.ChgAssignBowlerHandy(sAssignNo, sBowlerId, sHandy);
     
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1426,7 +1445,7 @@ begin
 
     //sResult := Global.Lane.RegCompetitionInfo(sCompetitionSeq, sGameMethod, sLaneMoveCnt, sMoveMethod);
 
-    if sResult = 'success' then
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
@@ -1441,16 +1460,7 @@ var
   sApi, sUserId, sAssignNo, sResult: String;
 begin
 
-  while True do
-  begin
-    if Global.Lane.LaneStatusUse = False then //TeeboxThread 사용중인지
-      Break;
-
-    Global.Log.LogErpApiDelayWrite('LaneStatusUse !!!!!!');
-    sleep(50);
-  end;
-
-  Global.Lane.LaneReserveUse := True;
+  ServerErpUse(True);
 
   //Z119_chgCheckOut
   Result := '';
@@ -1461,16 +1471,16 @@ begin
     sUserId := jObj.GetValue('user_id').Value;
     sAssignNo := jObj.GetValue('assign_no').Value;
 
-    Result := Global.Lane.SetLaneAssignCheckOut(sAssignNo, sUserId);
-    (*
-    if sResult = 'success' then
+    sResult := Global.Lane.SetLaneAssignCheckOut(sAssignNo, sUserId);
+
+    if sResult = 'Success' then
       Result := '{"result_cd":"0000", "result_msg":"Success"}'
     else
       Result := '{"result_cd":"GS99", "result_msg":"' + sResult + '"}';
-    *)
+
   finally
     FreeAndNil(jObj);
-    Global.Lane.LaneReserveUse := False;
+    ServerErpUse(False);
   end;
 end;
 
@@ -1496,8 +1506,7 @@ begin
     nIdx := Global.Lane.GetLaneInfoIndex(StrToInt(sLaneNo));
     if nIdx = -1 then
     begin
-      Result := '{"result_cd":"CS03",' +
-                 '"result_msg":"해당레인이 없습니다. lane_no=' + sLaneNo + '"}';
+      Result := '{"result_cd":"CS03",' + '"result_msg":"해당레인이 없습니다. lane_no=' + sLaneNo + '"}';
       Exit;
     end;
 
@@ -1509,15 +1518,13 @@ begin
       begin
         if rHoldInfo.HoldUser <> sUserId then
         begin
-          Result := '{"result_cd":"CS03",' +
-                     '"result_msg":"예약이 진행중입니다. 다른 레인을 선택해주세요"}';
+          Result := '{"result_cd":"CS03",' + '"result_msg":"예약이 진행중입니다. 다른 레인을 선택해주세요"}';
           Exit;
         end;
       end;
 
       //홀드요청시 동일사용자, 홀드취소
-      Result := '{"result_cd":"0000",' +
-                 '"result_msg":"Success"}';
+      Result := '{"result_cd":"0000",' + '"result_msg":"Success"}';
       Exit;
     end
     else
@@ -1527,8 +1534,7 @@ begin
 
         if (rHoldInfo.HoldUser <> sUserId) and (StrPos(PChar(sUserId), PChar('kiosk')) <> nil) then
         begin
-          Result := '{"result_cd":"CS03",' +
-                     '"result_msg":"예약이 진행중입니다. 임시예약을 취소할수 없습니다"}';
+          Result := '{"result_cd":"CS03",' + '"result_msg":"예약이 진행중입니다. 임시예약을 취소할수 없습니다"}';
           Exit;
         end;
       end;
@@ -1542,13 +1548,11 @@ begin
         rHoldInfo.HoldUser := sUserId;
         Global.Lane.SetLaneHold(sLaneNo, rHoldInfo);
 
-        Result := '{"result_cd":"0000",' +
-                   '"result_msg":"Success"}';
+        Result := '{"result_cd":"0000",' + '"result_msg":"Success"}';
       end
       else
       begin
-        Result := '{"result_cd":"",' +
-                    '"result_msg":"임시예약에 실패하였습니다. 다시 시도해주세요"}';
+        Result := '{"result_cd":"",' + '"result_msg":"임시예약에 실패하였습니다. 다시 시도해주세요"}';
       end;
 
     except
@@ -1557,8 +1561,7 @@ begin
         sLog := 'ChgLaneHold Exception : ' + sLaneNo + ' / ' + e.Message;
         Global.Log.LogServerWrite(sLog);
 
-        Result := '{"result_cd":"CS03",' +
-                   '"result_msg":"임시예약중 장애가 발생하였습니다"}';
+        Result := '{"result_cd":"CS03", "result_msg":"임시예약중 장애가 발생하였습니다"}';
         Exit;
       end;
     end;
@@ -1594,13 +1597,11 @@ begin
       begin
         Global.Lane.SetLaneLock(sLaneNo, sLockUse);
 
-        Result := '{"result_cd":"0000",' +
-                   '"result_msg":"Success"}';
+        Result := '{"result_cd":"0000", "result_msg":"Success"}';
       end
       else
       begin
-        Result := '{"result_cd":"",' +
-                    '"result_msg":"점검설정에 실패하였습니다. 다시 시도해주세요"}';
+        Result := '{"result_cd":"", "result_msg":"점검설정에 실패하였습니다. 다시 시도해주세요"}';
       end;
 
     except
@@ -1609,8 +1610,7 @@ begin
         sLog := 'ChgLaneLock Exception : ' + sLaneNo + ' / ' + e.Message;
         Global.Log.LogServerWrite(sLog);
 
-        Result := '{"result_cd":"CS03",' +
-                   '"result_msg":"점검설정중 장애가 발생하였습니다"}';
+        Result := '{"result_cd":"CS03", "result_msg":"점검설정중 장애가 발생하였습니다"}';
         Exit;
       end;
     end;
@@ -1619,6 +1619,27 @@ begin
     FreeAndNil(jObj);
   end;
 
+end;
+
+function TTcpServer.ServerErpUse(AUse: Boolean): Boolean;
+begin
+  if AUse = False then
+  begin
+    Global.ServerErp := False;
+  end
+  else
+  begin
+    while True do
+    begin
+      if Global.LaneErp = False then
+        Break;
+
+      Global.Log.LogErpApiDelayWrite('LaneErp !!!!!!');
+      sleep(50);
+    end;
+
+    Global.ServerErp := True;
+  end;
 end;
 
 end.

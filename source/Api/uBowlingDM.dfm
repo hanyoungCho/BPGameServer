@@ -1,9 +1,8 @@
 object BowlingDM: TBowlingDM
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
-  Height = 581
-  Width = 882
-  PixelsPerInch = 144
+  Height = 387
+  Width = 588
   object ConnectionDB: TUniConnection
     ProviderName = 'MySQL'
     Port = 3306
@@ -11,16 +10,16 @@ object BowlingDM: TBowlingDM
     Username = 'bowling'
     Server = 'localhost'
     LoginPrompt = False
-    Left = 180
-    Top = 26
+    Left = 120
+    Top = 17
     EncryptedPassword = '9DFF90FF88FF93FF96FF91FF98FFCEFFCDFFCCFFDEFF'
   end
   object MySQL: TMySQLUniProvider
-    Left = 69
-    Top = 26
+    Left = 46
+    Top = 17
   end
   object UniConnection1: TUniConnection
-    Left = 192
-    Top = 300
+    Left = 128
+    Top = 200
   end
 end
